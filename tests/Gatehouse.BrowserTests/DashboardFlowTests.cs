@@ -66,7 +66,7 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
         await Expect(page.Locator("pre.report-text")).ToContainTextAsync("NO-GO.");
         await Expect(page.GetByRole(AriaRole.Link, new() { Name = "Run" }).Last).ToHaveAttributeAsync(
             "href",
-            new Regex("^https://example\\.com/gatehouse-demo/", RegexOptions.CultureInvariant));
+            new Regex("^https://example\\.com/gatehouse-demo/"));
 
         await page.GetByRole(AriaRole.Button, new() { Name = "Copy report" }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Status).Last).ToContainTextAsync("Copied to clipboard.");
