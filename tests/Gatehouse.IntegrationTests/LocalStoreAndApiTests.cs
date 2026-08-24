@@ -139,6 +139,7 @@ public sealed class LocalStoreAndApiTests
             builder => builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:Gatehouse"] = $"Data Source={databasePath}",
+                ["Gatehouse:EnableUi"] = "false",
                 ["Gatehouse:Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture),
             }),
             services =>

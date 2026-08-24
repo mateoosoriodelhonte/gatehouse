@@ -71,6 +71,7 @@ public static class GatehouseHost
         });
         builder.Services.AddSingleton<ILocalReadinessStore, LocalReadinessStore>();
         configureServices?.Invoke(builder.Services);
+        var enableUi = builder.Configuration.GetValue("Gatehouse:EnableUi", true);
 
         var app = builder.Build();
         await MigrateDatabaseAsync(app.Services, cancellationToken);
@@ -100,9 +101,12 @@ public static class GatehouseHost
                 createScopeForStatusCodePages: true));
         app.UseAntiforgery();
         app.MapGatehouseApi();
-        app.MapStaticAssets();
-        app.MapRazorComponents<App>()
-            .AddInteractiveServerRenderMode();
+        if (enableUi)
+        {
+            app.MapStaticAssets();
+            app.MapRazorComponents<App>()
+                .AddInteractiveServerRenderMode();
+        }
 
         return app;
     }
