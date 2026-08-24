@@ -54,14 +54,14 @@ public sealed class CliApplication
     public static bool NeedsStore(IReadOnlyList<string> args)
     {
         ArgumentNullException.ThrowIfNull(args);
-        if (args.Contains("--demo", StringComparer.Ordinal) ||
-            args.Contains("--help", StringComparer.Ordinal) ||
-            args.Contains("-h", StringComparer.Ordinal))
+        var parsed = ParsedArguments.Parse(args);
+        if (parsed.Error is not null || parsed.Demo || parsed.Help)
         {
             return false;
         }
 
-        return args.Any(argument => argument is "repo" or "status" or "ready" or "pr" or "report");
+        return parsed.Positionals.FirstOrDefault() is
+            "repo" or "status" or "ready" or "pr" or "report";
     }
 
     [SuppressMessage(
@@ -108,10 +108,9 @@ public sealed class CliApplication
             await error.WriteLineAsync("Gatehouse could not read or write its local data.");
             return CliExitCodes.InternalFailure;
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            await error.WriteLineAsync(
-                $"Gatehouse could not complete the command ({exception.GetType().Name}).");
+            await error.WriteLineAsync("Gatehouse could not complete the command.");
             return CliExitCodes.InternalFailure;
         }
     }
@@ -179,7 +178,7 @@ public sealed class CliApplication
             else
             {
                 await output.WriteLineAsync($"Added {repository}.");
-                await output.WriteLineAsync($"Policy: {policyResult.Source}");
+                await output.WriteLineAsync($"Policy: {SafeLine(policyResult.Source)}");
                 await output.WriteLineAsync($"Next: gatehouse status {repository}");
             }
 
@@ -293,7 +292,7 @@ public sealed class CliApplication
         }
         else if (reportOnly)
         {
-            await output.WriteLineAsync(item.ReportMarkdown.TrimEnd());
+            await output.WriteLineAsync(SafeReport(item.ReportMarkdown.TrimEnd()));
         }
         else
         {
@@ -432,7 +431,7 @@ public sealed class CliApplication
                     $"Invalid policy: {string.Join(" ", parsed.Errors)}");
             }
 
-            return new PolicyLoadResult(parsed.Policy, file.FullName, null);
+            return new PolicyLoadResult(parsed.Policy, file.Name, null);
         }
         catch (Exception exception) when (exception is
             ArgumentException or NotSupportedException or PathTooLongException)
@@ -452,8 +451,8 @@ public sealed class CliApplication
         {
             await output.WriteLineAsync(
                 $"{item.Evaluation.Status.ToString().ToUpperInvariant(),-7} " +
-                $"#{item.Snapshot.Number} {item.Snapshot.Title}");
-            await output.WriteLineAsync($"        Next: {item.Evaluation.NextAction}");
+                $"#{item.Snapshot.Number} {SafeLine(item.Snapshot.Title)}");
+            await output.WriteLineAsync($"        Next: {SafeLine(item.Evaluation.NextAction)}");
         }
     }
 
@@ -462,13 +461,15 @@ public sealed class CliApplication
         ReadinessDocument document)
     {
         await output.WriteLineAsync(
-            $"{document.Status.ToUpperInvariant()} PR #{item.Snapshot.Number}: {item.Snapshot.Title}");
+            $"{document.Status.ToUpperInvariant()} PR #{item.Snapshot.Number}: " +
+            SafeLine(item.Snapshot.Title));
         await output.WriteLineAsync($"Repository: {document.Repository}");
-        await output.WriteLineAsync($"Author: {item.Snapshot.Author}");
-        await output.WriteLineAsync($"Branch: {item.Snapshot.HeadBranch} -> {item.Snapshot.BaseBranch}");
+        await output.WriteLineAsync($"Author: {SafeLine(item.Snapshot.Author)}");
+        await output.WriteLineAsync(
+            $"Branch: {SafeLine(item.Snapshot.HeadBranch)} -> {SafeLine(item.Snapshot.BaseBranch)}");
         await output.WriteLineAsync(
             $"Change: {item.Snapshot.ChangedFiles} files, +{item.Snapshot.Additions}/-{item.Snapshot.Deletions}");
-        await output.WriteLineAsync($"Summary: {document.Summary}");
+        await output.WriteLineAsync($"Summary: {SafeLine(document.Summary)}");
         await output.WriteLineAsync("Blockers:");
         if (document.Blockers.Count == 0)
         {
@@ -478,7 +479,8 @@ public sealed class CliApplication
         {
             foreach (var blocker in document.Blockers)
             {
-                await output.WriteLineAsync($"- [{blocker.Impact}] {blocker.Summary}");
+                await output.WriteLineAsync(
+                    $"- [{blocker.Impact}] {SafeLine(blocker.Summary)}");
             }
         }
 
@@ -486,11 +488,12 @@ public sealed class CliApplication
         foreach (var evidence in document.Evidence)
         {
             await output.WriteLineAsync(
-                $"- [{evidence.Outcome}] {evidence.Label}: {evidence.Summary}");
+                $"- [{evidence.Outcome}] {SafeLine(evidence.Label)}: " +
+                SafeLine(evidence.Summary));
         }
 
-        await output.WriteLineAsync($"Next action: {document.NextAction}");
-        await output.WriteLineAsync($"URL: {item.Snapshot.Url}");
+        await output.WriteLineAsync($"Next action: {SafeLine(document.NextAction)}");
+        await output.WriteLineAsync($"URL: {SafeLine(item.Snapshot.Url)}");
     }
 
     private async Task WriteJsonAsync<T>(T value) =>
@@ -699,6 +702,20 @@ public sealed class CliApplication
         await error.WriteLineAsync(message);
         return CliExitCodes.InvalidInput;
     }
+
+    private static string SafeLine(string value)
+    {
+        var characters = value.Select(character =>
+            char.IsControl(character) ||
+            char.GetUnicodeCategory(character) == UnicodeCategory.Format
+                ? ' '
+                : character);
+        return new string(characters.ToArray()).Trim();
+    }
+
+    private static string SafeReport(string value) => string.Join(
+        Environment.NewLine,
+        value.ReplaceLineEndings("\n").Split('\n').Select(SafeLine));
 
     private ILocalReadinessStore RequiredStore => store ??
         throw new InvalidOperationException("This command requires the local readiness store.");

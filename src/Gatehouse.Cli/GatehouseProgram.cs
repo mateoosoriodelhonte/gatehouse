@@ -40,10 +40,9 @@ public static class GatehouseProgram
             await Console.Error.WriteLineAsync("Gatehouse was cancelled.");
             return CliExitCodes.Cancelled;
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            await Console.Error.WriteLineAsync(
-                $"Gatehouse could not start safely ({exception.GetType().Name}).");
+            await Console.Error.WriteLineAsync("Gatehouse could not start safely.");
             return CliExitCodes.InternalFailure;
         }
     }
@@ -53,38 +52,25 @@ public static class GatehouseProgram
         int port,
         CancellationToken cancellationToken)
     {
-        try
+        var options = new WebApplicationOptions
         {
-            var options = new WebApplicationOptions
-            {
-                ApplicationName = typeof(GatehouseProgram).Assembly.GetName().Name,
-                EnvironmentName = "Production",
-            };
-            await using var app = await GatehouseHost.BuildAsync(
-                options,
-                builder => builder.Configuration.AddInMemoryCollection(
-                    new Dictionary<string, string?>
-                    {
-                        ["ConnectionStrings:Gatehouse"] = CliRuntime.ConnectionString(dataPath),
-                        ["Gatehouse:Port"] = port.ToString(
-                            System.Globalization.CultureInfo.InvariantCulture),
-                    }),
-                configureServices: null,
-                cancellationToken);
-            await app.StartAsync(cancellationToken);
-            await app.WaitForShutdownAsync(cancellationToken);
-            return CliExitCodes.Success;
-        }
-        catch (InvalidOperationException exception) when (
-            Environment.GetEnvironmentVariable("GATEHOUSE_HOST_DIAGNOSTICS") == "1")
-        {
-            var safeMessage = new string(exception.Message
-                .Where(character => !char.IsControl(character))
-                .Take(500)
-                .ToArray());
-            await Console.Error.WriteLineAsync($"Host diagnostic: {safeMessage}");
-            throw;
-        }
+            ApplicationName = typeof(GatehouseProgram).Assembly.GetName().Name,
+            EnvironmentName = "Production",
+        };
+        await using var app = await GatehouseHost.BuildAsync(
+            options,
+            builder => builder.Configuration.AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:Gatehouse"] = CliRuntime.ConnectionString(dataPath),
+                    ["Gatehouse:Port"] = port.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+                }),
+            configureServices: null,
+            cancellationToken);
+        await app.StartAsync(cancellationToken);
+        await app.WaitForShutdownAsync(cancellationToken);
+        return CliExitCodes.Success;
     }
 }
 
@@ -111,7 +97,9 @@ internal sealed record CliBootstrapOptions(
                 return Invalid("--data can be used only once.");
             }
 
-            if (++index >= args.Count || string.IsNullOrWhiteSpace(args[index]))
+            if (++index >= args.Count ||
+                string.IsNullOrWhiteSpace(args[index]) ||
+                args[index].StartsWith('-'))
             {
                 return Invalid("--data requires a database file path.");
             }

@@ -181,6 +181,37 @@ public sealed class CliApplicationTests
         Assert.Equal(CliExitCodes.InvalidInput, invalid);
     }
 
+    [Fact]
+    public async Task Human_output_removes_terminal_controls_from_provider_text()
+    {
+        var detail = DemoReadinessCatalog.Create();
+        var ready = detail.PullRequests.Single(item => item.Snapshot.Number == 142);
+        var unsafeReady = ready with
+        {
+            Snapshot = ready.Snapshot with
+            {
+                Title = "Fix\u001b[2J\nspoof\u202E",
+            },
+        };
+        var unsafeDetail = detail with
+        {
+            PullRequests = detail.PullRequests
+                .Select(item => item.Snapshot.Number == 142 ? unsafeReady : item)
+                .ToArray(),
+        };
+
+        var result = await RunAsync(
+            ["ready", "acme/payments", "--cached"],
+            new FakeStore(unsafeDetail));
+
+        Assert.Equal(CliExitCodes.Success, result.ExitCode);
+        Assert.DoesNotContain("\u001b", result.Output, StringComparison.Ordinal);
+        Assert.DoesNotContain("\u202E", result.Output, StringComparison.Ordinal);
+        Assert.Contains("Fix [2J spoof", result.Output, StringComparison.Ordinal);
+        Assert.True(CliApplication.NeedsStore(
+            ["status", "acme/payments", "--search", "--demo"]));
+    }
+
     private static async Task<CliResult> RunAsync(
         string[] args,
         ILocalReadinessStore? store = null,
