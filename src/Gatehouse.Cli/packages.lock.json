@@ -191,6 +191,14 @@
           "Gatehouse.Domain": "[1.0.0, )",
           "Microsoft.EntityFrameworkCore.Sqlite": "[10.0.11, )"
         }
+      },
+      "gatehouse.web": {
+        "type": "Project",
+        "dependencies": {
+          "Gatehouse.Application": "[1.0.0, )",
+          "Gatehouse.Domain": "[1.0.0, )",
+          "Gatehouse.Infrastructure": "[1.0.0, )"
+        }
       }
     }
   }

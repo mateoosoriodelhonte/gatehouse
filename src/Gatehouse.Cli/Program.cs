@@ -1,1 +1,3 @@
-Console.WriteLine("Hello, World!");
+using Gatehouse.Cli;
+
+return await GatehouseProgram.RunAsync(args);

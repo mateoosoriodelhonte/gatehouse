@@ -41,6 +41,53 @@ jobs:
         env:
           GATEHOUSE_SCREENSHOT_PATH: ${{ github.workspace }}/artifacts/browser/gatehouse-dashboard.png
 
+      - name: Pack command-line tool
+        run: |
+          dotnet pack src/Gatehouse.Domain/Gatehouse.Domain.csproj --configuration Release --no-build --output artifacts/packages
+          dotnet pack src/Gatehouse.Application/Gatehouse.Application.csproj --configuration Release --no-build --output artifacts/packages
+          dotnet pack src/Gatehouse.Infrastructure/Gatehouse.Infrastructure.csproj --configuration Release --no-build --output artifacts/packages
+          dotnet pack src/Gatehouse.Web/Gatehouse.Web.csproj --configuration Release --no-build --output artifacts/packages
+          dotnet pack src/Gatehouse.Cli/Gatehouse.Cli.csproj --configuration Release --no-build --output artifacts/packages
+
+      - name: Install and run packed command-line tool
+        run: |
+          mkdir -p artifacts/tool artifacts/tool-sandbox
+          dotnet tool install Gatehouse --tool-path artifacts/tool --version 1.0.0 --add-source artifacts/packages --ignore-failed-sources
+          artifacts/tool/gatehouse version | grep -F "Gatehouse 1.0.0"
+          pushd artifacts/tool-sandbox
+          set +e
+          ../tool/gatehouse status --demo --json > status.json
+          status_code=$?
+          set -e
+          test "$status_code" -eq 2
+          python3 -c 'import json; data=json.load(open("status.json")); assert data["schemaVersion"] == "1.0" and len(data["pullRequests"]) == 5'
+          ../tool/gatehouse --data gatehouse.db repo add octocat/hello-world --json > repository.json
+          python3 -c 'import json; data=json.load(open("repository.json")); assert data["repository"] == "octocat/hello-world"'
+          ../tool/gatehouse --data gatehouse.db serve --port 5349 > serve.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:5349/api/v1/health > health.json; then
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat serve.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if ! test -s health.json; then
+            cat serve.log
+            exit 1
+          fi
+          python3 -c 'import json; data=json.load(open("health.json")); assert data == {"status": "ok", "version": "1"}'
+          curl --fail --silent http://localhost:5349/repositories > dashboard.html
+          grep -F "Add a public or token-accessible GitHub repository" dashboard.html
+          kill "$server_pid"
+          wait "$server_pid" || true
+          trap - EXIT
+          popd
+
       - name: Save dashboard screenshot
         if: always()
         uses: actions/upload-artifact@v4

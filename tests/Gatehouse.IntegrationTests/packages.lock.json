@@ -105,6 +105,15 @@
           "Gatehouse.Domain": "[1.0.0, )"
         }
       },
+      "gatehouse": {
+        "type": "Project",
+        "dependencies": {
+          "Gatehouse.Application": "[1.0.0, )",
+          "Gatehouse.Domain": "[1.0.0, )",
+          "Gatehouse.Infrastructure": "[1.0.0, )",
+          "Gatehouse.Web": "[1.0.0, )"
+        }
+      },
       "gatehouse.domain": {
         "type": "Project"
       },
