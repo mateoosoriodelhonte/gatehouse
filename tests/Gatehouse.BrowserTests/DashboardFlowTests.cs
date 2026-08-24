@@ -82,7 +82,7 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
     private static ILocatorAssertions Expect(ILocator locator) => Assertions.Expect(locator);
 }
 
-public sealed class GatehouseBrowserFixture : IAsyncLifetime
+public sealed class GatehouseBrowserFixture : IAsyncLifetime, IDisposable
 {
     private readonly ConcurrentQueue<string> output = new();
     private Process? process;
@@ -164,6 +164,12 @@ public sealed class GatehouseBrowserFixture : IAsyncLifetime
 
     public Task DisposeAsync()
     {
+        Dispose();
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
         if (process is { HasExited: false })
         {
             process.Kill(entireProcessTree: true);
@@ -171,6 +177,7 @@ public sealed class GatehouseBrowserFixture : IAsyncLifetime
         }
 
         process?.Dispose();
+        process = null;
         if (databasePath is not null)
         {
             foreach (var candidate in new[]
@@ -185,9 +192,11 @@ public sealed class GatehouseBrowserFixture : IAsyncLifetime
                     File.Delete(candidate);
                 }
             }
+
+            databasePath = null;
         }
 
-        return Task.CompletedTask;
+        GC.SuppressFinalize(this);
     }
 
     private void CaptureOutput(object sender, DataReceivedEventArgs args)
