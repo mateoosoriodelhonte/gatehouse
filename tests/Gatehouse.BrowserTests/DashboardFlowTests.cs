@@ -38,7 +38,7 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
         page.PageError += (_, error) => browserErrors.Enqueue($"page error: {error}");
 
         await page.GotoAsync("/repositories");
-        await Expect(page.Locator(".app-shell")).ToHaveAttributeAsync("data-interactive", "true");
+        await WaitForInteractiveAsync(page, browserErrors);
         await page.GetByRole(AriaRole.Link, new() { Name = "Open demo repository" }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "acme/payments" }))
             .ToBeVisibleAsync();
@@ -81,6 +81,33 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
     }
 
     private static ILocatorAssertions Expect(ILocator locator) => Assertions.Expect(locator);
+
+    private static async Task WaitForInteractiveAsync(
+        IPage page,
+        ConcurrentQueue<string> browserErrors)
+    {
+        try
+        {
+            await Expect(page.Locator(".app-shell")).ToHaveAttributeAsync(
+                "data-interactive",
+                "true",
+                new() { Timeout = 10_000 });
+        }
+        catch (PlaywrightException exception)
+        {
+            var runtime = await page.EvaluateAsync<string>(
+                "JSON.stringify({ readyState: document.readyState, " +
+                "blazorType: typeof window.Blazor, " +
+                "scripts: Array.from(document.scripts, script => script.src), " +
+                "resources: performance.getEntriesByType('resource')" +
+                ".map(resource => resource.name)" +
+                ".filter(name => name.includes('_blazor') || name.includes('blazor.web')) })");
+            throw new InvalidOperationException(
+                $"The Blazor circuit did not become interactive. Runtime: {runtime}. " +
+                $"Browser messages: {string.Join(" | ", browserErrors)}",
+                exception);
+        }
+    }
 }
 
 public sealed class GatehouseBrowserFixture : IAsyncLifetime, IDisposable
