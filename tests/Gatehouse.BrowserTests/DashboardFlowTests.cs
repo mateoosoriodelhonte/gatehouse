@@ -130,6 +130,7 @@ public sealed class GatehouseBrowserFixture : IAsyncLifetime, IDisposable
     public async Task InitializeAsync()
     {
         var repositoryRoot = FindRepositoryRoot();
+        var webProjectDirectory = Path.Combine(repositoryRoot, "src", "Gatehouse.Web");
         var port = GetAvailablePort();
         databasePath = Path.Combine(Path.GetTempPath(), $"gatehouse-browser-{Guid.NewGuid():N}.db");
         BaseAddress = new Uri($"http://127.0.0.1:{port}");
@@ -139,21 +140,10 @@ public sealed class GatehouseBrowserFixture : IAsyncLifetime, IDisposable
             RedirectStandardError = true,
             RedirectStandardOutput = true,
             UseShellExecute = false,
-            WorkingDirectory = repositoryRoot,
+            WorkingDirectory = webProjectDirectory,
         };
-        foreach (var argument in new[]
-        {
-            "run",
-            "--project",
-            Path.Combine(repositoryRoot, "src", "Gatehouse.Web", "Gatehouse.Web.csproj"),
-            "--configuration",
-            "Release",
-            "--no-build",
-            "--no-launch-profile",
-        })
-        {
-            startInfo.ArgumentList.Add(argument);
-        }
+        startInfo.ArgumentList.Add(
+            Path.Combine(webProjectDirectory, "bin", "Release", "net10.0", "Gatehouse.Web.dll"));
 
         startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
         startInfo.Environment["ConnectionStrings__Gatehouse"] = $"Data Source={databasePath}";
