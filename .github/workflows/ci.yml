@@ -33,6 +33,9 @@ jobs:
       - name: Build
         run: dotnet build Gatehouse.slnx --configuration Release --no-restore
 
+      - name: Install browser
+        run: pwsh tests/Gatehouse.BrowserTests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
       - name: Test
         run: dotnet test Gatehouse.slnx --configuration Release --no-build --logger "console;verbosity=normal"
 

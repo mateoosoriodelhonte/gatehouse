@@ -1,0 +1,135 @@
+@page "/repositories"
+@inject GatehouseUiService Gatehouse
+@inject UiSessionState Session
+@inject NavigationManager Navigation
+@inject IJSRuntime JavaScript
+
+<PageTitle>Repositories · Gatehouse</PageTitle>
+
+<div class="page-stack">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Workspace</p>
+            <h1>Repositories</h1>
+            <p>Add a public or token-accessible GitHub repository, or explore the full product with synthetic demo data.</p>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert error" role="alert" tabindex="-1" id="repository-error">@error</div>
+    }
+
+    <section class="panel" aria-labelledby="add-repository-heading">
+        <div class="panel-header">
+            <div>
+                <h2 id="add-repository-heading">Add repository</h2>
+                <p>Gatehouse requests read-only repository metadata. Public repositories work without a token.</p>
+            </div>
+            <span class="fact-pill">@(Gatehouse.IsGitHubTokenConfigured ? "Token available" : "Anonymous access")</span>
+        </div>
+        <div class="form-grid">
+            <div class="field">
+                <label for="repository-owner">GitHub owner</label>
+                <input id="repository-owner" autocomplete="off" @bind="owner" placeholder="octocat" />
+            </div>
+            <div class="field">
+                <label for="repository-name">Repository name</label>
+                <input id="repository-name" autocomplete="off" @bind="name" placeholder="hello-world" />
+            </div>
+        </div>
+        <div class="inline-actions section-actions">
+            <button type="button" class="button" disabled="@busy" @onclick="AddRepositoryAsync">
+                @(busy ? "Adding…" : "Add repository")
+            </button>
+            <span class="help-text">No GitHub write permission is requested.</span>
+        </div>
+    </section>
+
+    <section aria-labelledby="saved-repositories-heading">
+        <div class="panel-header">
+            <div>
+                <h2 id="saved-repositories-heading">Saved repositories</h2>
+                <p>Configuration and cached evidence stay in local SQLite.</p>
+            </div>
+        </div>
+        <div class="repository-grid">
+            <article class="repository-card demo">
+                <div>
+                    <p class="eyebrow">Demo data</p>
+                    <h2>acme/payments</h2>
+                </div>
+                <p>Five fixed changes cover ready, review, failing CI, conflict, and draft workflows.</p>
+                <div class="repository-meta">
+                    <span>5 pull requests</span>
+                    <span>No network calls</span>
+                    <span>Safe for screenshots</span>
+                </div>
+                <div>
+                    <button type="button" class="button" @onclick="OpenDemo">Open demo repository</button>
+                </div>
+            </article>
+
+            @foreach (var repository in repositories)
+            {
+                <article class="repository-card" @key="repository.Id">
+                    <div>
+                        <p class="eyebrow">@(repository.IsSelected ? "Selected" : "Local repository")</p>
+                        <h2>@repository.Owner/@repository.Name</h2>
+                    </div>
+                    <div class="repository-meta">
+                        <span>@repository.CachedPullRequestCount cached PRs</span>
+                        <span>@RefreshLabel(repository)</span>
+                        <span>@(repository.LastFetchStatus?.ToString() ?? "Not refreshed")</span>
+                    </div>
+                    <div>
+                        <a class="button secondary" href="/repositories/@repository.Id/overview">Open dashboard</a>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    private IReadOnlyList<LocalRepositorySummary> repositories = [];
+    private string owner = string.Empty;
+    private string name = string.Empty;
+    private string? error;
+    private bool busy;
+
+    protected override async Task OnInitializedAsync() =>
+        repositories = await Gatehouse.ListRepositoriesAsync();
+
+    private void OpenDemo()
+    {
+        Session.SelectRepository(DemoReadinessCatalog.RepositoryId);
+        Navigation.NavigateTo($"/repositories/{DemoReadinessCatalog.RepositoryId}/overview");
+    }
+
+    private async Task AddRepositoryAsync()
+    {
+        busy = true;
+        error = null;
+        try
+        {
+            var repository = await Gatehouse.AddRepositoryAsync(owner, name);
+            Session.SelectRepository(repository.Id);
+            Navigation.NavigateTo($"/repositories/{repository.Id}/overview");
+        }
+        catch (Exception exception) when (exception is ArgumentException or DuplicateRepositoryException)
+        {
+            error = exception.Message;
+            await JavaScript.InvokeVoidAsync("gatehouse.focus", "repository-error");
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private static string RefreshLabel(LocalRepositorySummary repository) =>
+        repository.LastSuccessfulRefreshAt is null
+            ? "Never refreshed"
+            : $"Refreshed {repository.LastSuccessfulRefreshAt.Value:MMM d, HH:mm}";
+}

@@ -1,0 +1,52 @@
+@page "/repositories/{RepositoryId:guid}/reports"
+@inject GatehouseUiService Gatehouse
+@inject UiSessionState Session
+
+<PageTitle>Reports · Gatehouse</PageTitle>
+
+@if (repository is null)
+{
+    <p class="loading-line" role="status">Loading reports…</p>
+}
+else
+{
+    <div class="page-stack">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">@repository.Repository.Owner/@repository.Repository.Name</p>
+                <h1>Handoff reports</h1>
+                <p>Copy deterministic GO, REVIEW, NO-GO, DRAFT, or UNKNOWN reports without rewriting evidence.</p>
+            </div>
+        </header>
+
+        <RepositoryNav RepositoryId="RepositoryId" SelectedCount="Session.SelectedPullRequests.Count" />
+
+        @foreach (var item in repository.PullRequests.OrderBy(item => item.Snapshot.Number))
+        {
+            <section class="panel" aria-labelledby="report-@item.Snapshot.Number">
+                <div class="panel-header">
+                    <div>
+                        <h2 id="report-@item.Snapshot.Number">#@item.Snapshot.Number · @item.Snapshot.Title</h2>
+                        <StatusBadge Status="item.Evaluation.Status" />
+                    </div>
+                    <a href="/repositories/@RepositoryId/pull-requests/@item.Snapshot.Number">Review packet</a>
+                </div>
+                <pre class="report-text">@item.ReportMarkdown</pre>
+                <ClipboardButton Text="@item.ReportMarkdown" />
+            </section>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid RepositoryId { get; set; }
+
+    private LocalRepositoryDetail? repository;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Session.SelectRepository(RepositoryId);
+        repository = await Gatehouse.GetRepositoryAsync(RepositoryId);
+    }
+}

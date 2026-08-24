@@ -1,7 +1,18 @@
 ﻿@page "/"
+@inject GatehouseUiService Gatehouse
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Gatehouse</PageTitle>
 
-<h1>Hello, world!</h1>
+<p class="loading-line" role="status">Opening Gatehouse…</p>
 
-Welcome to your new app.
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var repositories = await Gatehouse.ListRepositoriesAsync();
+        var selected = repositories.FirstOrDefault(item => item.IsSelected);
+        Navigation.NavigateTo(selected is null
+            ? "/repositories"
+            : $"/repositories/{selected.Id}/overview");
+    }
+}

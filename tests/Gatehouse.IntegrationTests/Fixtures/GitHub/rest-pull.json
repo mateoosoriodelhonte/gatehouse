@@ -14,6 +14,11 @@
   "user": {
     "login": "octo-dev"
   },
+  "labels": [
+    {
+      "name": "bug"
+    }
+  ],
   "base": {
     "ref": "main",
     "sha": "base-sha"
@@ -25,6 +30,11 @@
   "requested_reviewers": [
     {
       "login": "maintainer"
+    }
+  ],
+  "requested_teams": [
+    {
+      "slug": "payments-team"
     }
   ]
 }

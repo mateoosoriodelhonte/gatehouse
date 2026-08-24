@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Gatehouse.Application;
 using Gatehouse.Infrastructure.GitHub;
 using Gatehouse.Infrastructure.Persistence;
+using Gatehouse.Web.Ui;
 using Gatehouse.Web.Components;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
@@ -70,6 +71,8 @@ public static class GatehouseHost
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         builder.Services.AddSingleton<ILocalReadinessStore, LocalReadinessStore>();
+        builder.Services.AddScoped<GatehouseUiService>();
+        builder.Services.AddScoped<UiSessionState>();
         configureServices?.Invoke(builder.Services);
         var enableUi = builder.Configuration.GetValue("Gatehouse:EnableUi", true);
 

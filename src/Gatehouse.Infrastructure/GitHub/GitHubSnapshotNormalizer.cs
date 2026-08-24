@@ -32,6 +32,7 @@ public static class GitHubSnapshotNormalizer
 
         var body = OptionalString(pullRequest, "body") ?? string.Empty;
         var requestedReviewers = ArrayLength(pullRequest, "requested_reviewers");
+        var requestedTeams = ArrayLength(pullRequest, "requested_teams");
         var normalizedReviews = NormalizeRestReviews(reviews);
 
         return new PullRequestSnapshot
@@ -45,11 +46,18 @@ public static class GitHubSnapshotNormalizer
             Mergeability = RestMergeability(pullRequest),
             ReviewDecision = normalizedReviews.Decision,
             ApprovalCount = normalizedReviews.ApprovalCount,
-            RequestedReviewerCount = requestedReviewers,
+            RequestedReviewerCount = requestedReviewers + requestedTeams,
+            RequestedReviewers = NamedArray(pullRequest, "requested_reviewers", "login")
+                .Concat(NamedArray(pullRequest, "requested_teams", "slug"))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(name => name, StringComparer.Ordinal)
+                .ToArray(),
             UnresolvedReviewThreadCount = null,
             BranchFreshness = RestFreshness(comparison),
             Checks = NormalizeRestChecks(checkRuns, requiredCheckNames),
             IssueLinks = ParseIssueLinks(body),
+            Labels = NamedArray(pullRequest, "labels", "name"),
             UpdatedAt = RequiredDateTimeOffset(pullRequest, "updated_at"),
             FetchedAt = fetchedAt,
             Url = RequiredString(pullRequest, "html_url"),
@@ -89,10 +97,12 @@ public static class GitHubSnapshotNormalizer
             ApprovalCount = reviews.EnumerateArray().Count(review =>
                 string.Equals(OptionalString(review, "state"), "APPROVED", StringComparison.Ordinal)),
             RequestedReviewerCount = reviewRequests.GetArrayLength(),
+            RequestedReviewers = NormalizeGraphQlReviewers(reviewRequests),
             UnresolvedReviewThreadCount = CountUnresolvedThreads(pullRequest),
             BranchFreshness = GraphQlFreshness(OptionalString(pullRequest, "mergeStateStatus")),
             Checks = NormalizeGraphQlChecks(pullRequest, requiredCheckNames),
             IssueLinks = NormalizeGraphQlIssueLinks(pullRequest),
+            Labels = NamedNodes(pullRequest, "labels", "name"),
             UpdatedAt = RequiredDateTimeOffset(pullRequest, "updatedAt"),
             FetchedAt = fetchedAt,
             Url = RequiredString(pullRequest, "url"),
@@ -255,6 +265,42 @@ public static class GitHubSnapshotNormalizer
             .OrderBy(link => link.Number)
             .ToArray();
     }
+
+    private static string[] NormalizeGraphQlReviewers(JsonElement nodes) =>
+        nodes.EnumerateArray()
+            .Select(node => RequiredObject(node, "requestedReviewer"))
+            .Select(reviewer =>
+                OptionalString(reviewer, "login") ?? OptionalString(reviewer, "slug"))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+
+    private static string[] NamedNodes(
+        JsonElement element,
+        string connectionName,
+        string propertyName) =>
+        RequiredObject(element, connectionName)
+            .GetProperty("nodes")
+            .EnumerateArray()
+            .Select(node => RequiredString(node, propertyName))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+
+    private static string[] NamedArray(
+        JsonElement element,
+        string arrayName,
+        string propertyName) =>
+        RequiredArray(element, arrayName)
+            .Select(item => RequiredString(item, propertyName))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(name => name, StringComparer.Ordinal)
+            .ToArray();
 
     private static ChangedFile[] NormalizeRestFiles(JsonElement files) =>
         files.EnumerateArray()

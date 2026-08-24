@@ -41,6 +41,8 @@ public sealed record PullRequestSnapshot
 
     public required int RequestedReviewerCount { get; init; }
 
+    public IReadOnlyList<string> RequestedReviewers { get; init; } = [];
+
     public required int? UnresolvedReviewThreadCount { get; init; }
 
     public required BranchFreshness BranchFreshness { get; init; }
@@ -48,6 +50,8 @@ public sealed record PullRequestSnapshot
     public required IReadOnlyList<CheckSnapshot> Checks { get; init; }
 
     public required IReadOnlyList<IssueLink> IssueLinks { get; init; }
+
+    public IReadOnlyList<string> Labels { get; init; } = [];
 
     public required DateTimeOffset UpdatedAt { get; init; }
 

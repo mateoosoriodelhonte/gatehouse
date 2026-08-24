@@ -34,8 +34,18 @@ public sealed class GitHubApiClient : IPullRequestSource
               mergeStateStatus
               reviewDecision
               author { login }
+              labels(first: 100) {
+                nodes { name }
+                pageInfo { hasNextPage }
+              }
               reviewRequests(first: 100) {
-                nodes { requestedReviewer { __typename } }
+                nodes {
+                  requestedReviewer {
+                    __typename
+                    ... on User { login }
+                    ... on Team { slug }
+                  }
+                }
                 pageInfo { hasNextPage }
               }
               reviews(first: 100, states: [APPROVED, CHANGES_REQUESTED]) {
@@ -806,6 +816,7 @@ public sealed class GitHubApiClient : IPullRequestSource
     {
         foreach (var connectionName in new[]
         {
+            "labels",
             "reviewRequests",
             "reviews",
             "reviewThreads",

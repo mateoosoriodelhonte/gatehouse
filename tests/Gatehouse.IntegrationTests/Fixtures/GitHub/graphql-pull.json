@@ -22,9 +22,24 @@
         "author": {
           "login": "octo-dev"
         },
+        "labels": {
+          "pageInfo": { "hasNextPage": false },
+          "nodes": [
+            {
+              "name": "payments"
+            }
+          ]
+        },
         "reviewRequests": {
           "pageInfo": { "hasNextPage": false },
-          "nodes": []
+          "nodes": [
+            {
+              "requestedReviewer": {
+                "__typename": "User",
+                "login": "release-captain"
+              }
+            }
+          ]
         },
         "reviews": {
           "pageInfo": { "hasNextPage": false },

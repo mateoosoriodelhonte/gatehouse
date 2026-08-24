@@ -1,20 +1,226 @@
+.skip-link {
+    background: var(--accent);
+    color: #07111f;
+    font-weight: 800;
+    left: 1rem;
+    padding: .7rem 1rem;
+    position: fixed;
+    top: -5rem;
+    z-index: 2000;
+}
+
+.skip-link:focus {
+    top: 1rem;
+}
+
+.app-shell {
+    display: grid;
+    grid-template-columns: 15.5rem minmax(0, 1fr);
+    min-height: 100vh;
+}
+
+.sidebar {
+    background: var(--surface-strong);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 1.25rem 1rem;
+    position: sticky;
+    top: 0;
+}
+
+.brand {
+    align-items: center;
+    color: var(--text);
+    display: flex;
+    gap: .75rem;
+    margin: 0 .35rem 2rem;
+    text-decoration: none;
+}
+
+.brand-mark {
+    align-items: center;
+    background: var(--accent);
+    border-radius: .55rem;
+    color: #07111f;
+    display: inline-flex;
+    font-size: .75rem;
+    font-weight: 900;
+    height: 2.25rem;
+    justify-content: center;
+    letter-spacing: -.02em;
+    width: 2.25rem;
+}
+
+.brand strong,
+.brand small {
+    display: block;
+}
+
+.brand strong {
+    letter-spacing: -.02em;
+}
+
+.brand small,
+.sidebar-note small {
+    color: var(--muted);
+    font-size: .72rem;
+    margin-top: .12rem;
+}
+
+.main-nav {
+    display: grid;
+    gap: .35rem;
+}
+
+.main-nav a {
+    align-items: center;
+    border-radius: .45rem;
+    color: var(--muted-strong);
+    display: flex;
+    gap: .65rem;
+    padding: .65rem .75rem;
+    text-decoration: none;
+}
+
+.main-nav a:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.sidebar-note {
+    align-items: flex-start;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: .6rem;
+    margin-top: auto;
+    padding: 1rem .4rem 0;
+}
+
+.sidebar-note strong,
+.sidebar-note small {
+    display: block;
+}
+
+.sidebar-note strong {
+    font-size: .78rem;
+}
+
+.read-only-mark {
+    color: var(--go);
+    font-size: .75rem;
+    line-height: 1.5;
+}
+
+.content-shell {
+    min-width: 0;
+}
+
+.topbar {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    min-height: 3.75rem;
+    padding: .75rem clamp(1rem, 3vw, 2.5rem);
+}
+
+.topbar p {
+    color: var(--muted);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: .45rem;
+    color: var(--muted-strong);
+    cursor: pointer;
+    padding: .45rem .65rem;
+}
+
+main {
+    margin: 0 auto;
+    max-width: 94rem;
+    padding: clamp(1.25rem, 3vw, 2.5rem);
+}
+
 #blazor-error-ui {
-    color-scheme: light only;
-    background: lightyellow;
+    background: #7f1d1d;
     bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -1px 12px rgba(0, 0, 0, .35);
     box-sizing: border-box;
+    color: white;
     display: none;
     left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    padding: .8rem 3.5rem .8rem 1.25rem;
     position: fixed;
     width: 100%;
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
+#blazor-error-ui a {
+    color: white;
+    margin-left: .75rem;
+}
+
+#blazor-error-ui .dismiss {
+    background: transparent;
+    border: 0;
+    color: white;
+    cursor: pointer;
+    font-size: 1.4rem;
+    position: absolute;
+    right: .8rem;
+    top: .45rem;
+}
+
+@media (max-width: 760px) {
+    .app-shell {
+        display: block;
     }
+
+    .sidebar {
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        border-right: 0;
+        flex-direction: row;
+        gap: .75rem;
+        min-height: auto;
+        overflow-x: auto;
+        padding: .75rem 1rem;
+        position: static;
+    }
+
+    .brand {
+        margin: 0 auto 0 0;
+    }
+
+    .brand small,
+    .sidebar-note,
+    .main-nav a span {
+        display: none;
+    }
+
+    .main-nav {
+        display: flex;
+    }
+
+    .main-nav a {
+        white-space: nowrap;
+    }
+
+    .topbar {
+        justify-content: flex-end;
+        min-height: 3rem;
+    }
+
+    .topbar p {
+        display: none;
+    }
+}

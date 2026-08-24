@@ -1,0 +1,143 @@
+@page "/repositories/{RepositoryId:guid}/policy"
+@inject GatehouseUiService Gatehouse
+@inject UiSessionState Session
+
+<PageTitle>Policy · Gatehouse</PageTitle>
+
+@if (repository is null)
+{
+    <p class="loading-line" role="status">Loading policy…</p>
+}
+else
+{
+    <div class="page-stack">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">@repository.Repository.Owner/@repository.Repository.Name</p>
+                <h1>Readiness policy</h1>
+                <p>Policy turns GitHub facts into deterministic verdicts. Changes re-evaluate cached evidence.</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="button" disabled="@(saving || IsDemo)" @onclick="SaveAsync">
+                    @(saving ? "Saving…" : "Save policy")
+                </button>
+            </div>
+        </header>
+
+        <RepositoryNav RepositoryId="RepositoryId" SelectedCount="Session.SelectedPullRequests.Count" />
+
+        @if (IsDemo)
+        {
+            <div class="alert warning" role="status">Demo policy is fixed so screenshots and tests stay deterministic.</div>
+        }
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert" role="status" aria-live="polite">@message</div>
+        }
+
+        <section class="panel" aria-labelledby="policy-gates-heading">
+            <div class="panel-header">
+                <div>
+                    <h2 id="policy-gates-heading">Configured gates</h2>
+                    <p>Safe defaults require green checks, approval, resolved threads, and clean mergeability.</p>
+                </div>
+                <span class="fact-pill">Policy version @repository.Policy.Version</span>
+            </div>
+            <div class="policy-grid">
+                <label class="policy-option">
+                    <input type="checkbox" @bind="requireAllChecks" />
+                    <span><strong>Require all checks</strong><span>Waiting, cancelled, and failed checks remain distinct.</span></span>
+                </label>
+                <label class="policy-option">
+                    <input type="checkbox" @bind="requireApproval" />
+                    <span><strong>Require approval</strong><span>Comments do not count as approvals.</span></span>
+                </label>
+                <label class="policy-option">
+                    <input type="checkbox" @bind="requireNoUnresolvedThreads" />
+                    <span><strong>Require resolved threads</strong><span>Unknown thread state fails closed.</span></span>
+                </label>
+                <label class="policy-option">
+                    <input type="checkbox" @bind="requireMergeable" />
+                    <span><strong>Require mergeable</strong><span>GitHub calculating state remains UNKNOWN.</span></span>
+                </label>
+                <label class="policy-option">
+                    <input type="checkbox" @bind="requireLinkedIssue" />
+                    <span><strong>Require explicit issue link</strong><span>Possible references do not satisfy this gate.</span></span>
+                </label>
+                <label class="policy-option">
+                    <input type="checkbox" @bind="requireCurrentBranch" />
+                    <span><strong>Require current branch</strong><span>A behind branch blocks only when this gate is on.</span></span>
+                </label>
+                <label class="policy-option">
+                    <input type="checkbox" @bind="blockOnChangesRequested" />
+                    <span><strong>Block requested changes</strong><span>A current changes-requested review becomes a blocker.</span></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="panel" aria-labelledby="policy-boundary-heading">
+            <h2 id="policy-boundary-heading">Evidence boundary</h2>
+            <dl class="definition-list">
+                <div><dt>GitHub facts</dt><dd>Draft state, checks, reviews, issue links, threads, mergeability, and branch freshness.</dd></div>
+                <div><dt>Repository policy</dt><dd>The gates above. Different teams can use different definitions of ready.</dd></div>
+                <div><dt>Gatehouse verdict</dt><dd>A pure, reproducible result with rules, blockers, evidence, and a next action.</dd></div>
+            </dl>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid RepositoryId { get; set; }
+
+    private LocalRepositoryDetail? repository;
+    private bool requireLinkedIssue;
+    private bool requireAllChecks;
+    private bool requireApproval;
+    private bool requireNoUnresolvedThreads;
+    private bool requireMergeable;
+    private bool requireCurrentBranch;
+    private bool blockOnChangesRequested;
+    private bool saving;
+    private string? message;
+    private bool IsDemo => RepositoryId == DemoReadinessCatalog.RepositoryId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Session.SelectRepository(RepositoryId);
+        repository = await Gatehouse.GetRepositoryAsync(RepositoryId);
+        if (repository is not null)
+        {
+            requireLinkedIssue = repository.Policy.RequireLinkedIssue;
+            requireAllChecks = repository.Policy.RequireAllChecks;
+            requireApproval = repository.Policy.RequireApproval;
+            requireNoUnresolvedThreads = repository.Policy.RequireNoUnresolvedThreads;
+            requireMergeable = repository.Policy.RequireMergeable;
+            requireCurrentBranch = repository.Policy.RequireCurrentBranch;
+            blockOnChangesRequested = repository.Policy.BlockOnChangesRequested;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        message = null;
+        var policy = new RepositoryPolicy
+        {
+            Version = repository?.Policy.Version ?? RepositoryPolicy.SafeDefaults.Version,
+            RequireLinkedIssue = requireLinkedIssue,
+            RequireAllChecks = requireAllChecks,
+            RequireApproval = requireApproval,
+            RequireNoUnresolvedThreads = requireNoUnresolvedThreads,
+            RequireMergeable = requireMergeable,
+            RequireCurrentBranch = requireCurrentBranch,
+            BlockOnChangesRequested = blockOnChangesRequested,
+        };
+        var saved = await Gatehouse.UpdatePolicyAsync(RepositoryId, policy);
+        repository = await Gatehouse.GetRepositoryAsync(RepositoryId);
+        message = saved
+            ? "Policy saved. Cached pull requests were re-evaluated with immutable history."
+            : "The repository was not available.";
+        saving = false;
+    }
+}

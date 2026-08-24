@@ -1,0 +1,118 @@
+@page "/repositories/{RepositoryId:guid}/triage"
+@inject GatehouseUiService Gatehouse
+@inject UiSessionState Session
+
+<PageTitle>Batch triage · Gatehouse</PageTitle>
+
+@if (repository is null)
+{
+    <p class="loading-line" role="status">Loading batch triage…</p>
+}
+else
+{
+    <div class="page-stack">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">@repository.Repository.Owner/@repository.Repository.Name</p>
+                <h1>Batch triage</h1>
+                <p>Compare selected changes with one deterministic primary finding per pull request.</p>
+            </div>
+            <div class="header-actions">
+                <a class="button secondary" href="/repositories/@RepositoryId/pull-requests">Change selection</a>
+                @if (Selected.Count > 0)
+                {
+                    <ClipboardButton Text="@BatchReport" Label="Copy batch report" />
+                }
+            </div>
+        </header>
+
+        <RepositoryNav RepositoryId="RepositoryId" SelectedCount="Session.SelectedPullRequests.Count" />
+
+        <section class="panel" aria-labelledby="triage-table-heading">
+            <div class="panel-header">
+                <div>
+                    <h2 id="triage-table-heading">Selected changes</h2>
+                    <p>@Selected.Count changes ready for a handoff.</p>
+                </div>
+            </div>
+            @if (Selected.Count == 0)
+            {
+                <div class="empty-state">
+                    <h3>No pull requests selected</h3>
+                    <p>Select one or more changes from the pull request table.</p>
+                    <a class="button" href="/repositories/@RepositoryId/pull-requests">Choose changes</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-scroll" role="region" aria-label="Batch triage results" tabindex="0">
+                    <table class="readiness-table">
+                        <caption class="sr-only">Selected pull requests with readiness and primary blocker</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Pull request</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Primary blocker or result</th>
+                                <th scope="col">Next action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Selected)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="/repositories/@RepositoryId/pull-requests/@item.Snapshot.Number">
+                                            #@item.Snapshot.Number · @item.Snapshot.Title
+                                        </a>
+                                    </td>
+                                    <td><StatusBadge Status="item.Evaluation.Status" /></td>
+                                    <td>@PrimaryFinding(item)</td>
+                                    <td>@item.Evaluation.NextAction</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        @if (Selected.Count > 0)
+        {
+            <section class="panel" aria-labelledby="batch-report-heading">
+                <div class="panel-header">
+                    <div>
+                        <h2 id="batch-report-heading">Copyable batch report</h2>
+                        <p>Plain Markdown for an issue, pull request, or handoff note.</p>
+                    </div>
+                </div>
+                <pre class="report-text">@BatchReport</pre>
+            </section>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid RepositoryId { get; set; }
+
+    private LocalRepositoryDetail? repository;
+    private IReadOnlyList<CachedPullRequestReadiness> Selected => repository?.PullRequests
+        .Where(item => Session.SelectedPullRequests.Contains(item.Snapshot.Number))
+        .OrderBy(item => item.Snapshot.Number)
+        .ToArray() ?? [];
+    private string BatchReport => string.Join(
+        Environment.NewLine,
+        new[] { "| PR | Status | Primary blocker |", "|---|---|---|" }
+            .Concat(Selected.Select(item =>
+                $"| #{item.Snapshot.Number} | {item.Evaluation.Status.ToString().ToUpperInvariant()} | " +
+                $"{PrimaryFinding(item)} |")));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Session.SelectRepository(RepositoryId);
+        repository = await Gatehouse.GetRepositoryAsync(RepositoryId);
+    }
+
+    private static string PrimaryFinding(CachedPullRequestReadiness item) =>
+        item.Evaluation.Blockers.FirstOrDefault()?.Summary ?? "—";
+}

@@ -1,0 +1,84 @@
+@page "/settings"
+@inject GatehouseUiService Gatehouse
+
+<PageTitle>Settings · Gatehouse</PageTitle>
+
+<div class="page-stack">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Local settings</p>
+            <h1>Settings and privacy</h1>
+            <p>Gatehouse is local-first, read-only, and has no analytics or hosted backend.</p>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert" role="status" aria-live="polite">@message</div>
+    }
+
+    <section class="panel" aria-labelledby="connection-heading">
+        <div class="panel-header">
+            <div>
+                <h2 id="connection-heading">GitHub connection</h2>
+                <p>Authentication is optional for public repositories and raises rate limits when configured.</p>
+            </div>
+            <span class="status-badge @(Gatehouse.IsGitHubTokenConfigured ? "status-go" : "status-unknown")">
+                <span class="status-mark" aria-hidden="true">@(Gatehouse.IsGitHubTokenConfigured ? "✓" : "○")</span>
+                @(Gatehouse.IsGitHubTokenConfigured ? "TOKEN AVAILABLE" : "ANONYMOUS")
+            </span>
+        </div>
+        <dl class="definition-list">
+            <div><dt>Configuration</dt><dd>Set <code>GATEHOUSE_GITHUB_TOKEN</code> in the process environment. Gatehouse never returns or stores its value.</dd></div>
+            <div><dt>Recommended access</dt><dd>Use a fine-grained token with read-only access to the repositories you choose.</dd></div>
+            <div><dt>GitHub writes</dt><dd>Not supported in V1. Gatehouse cannot merge, review, push, rerun, or change repository settings.</dd></div>
+        </dl>
+    </section>
+
+    <section class="panel" aria-labelledby="storage-heading">
+        <div class="panel-header">
+            <div>
+                <h2 id="storage-heading">Local data</h2>
+                <p>Repository names, pull request metadata, evaluations, and reports are cached in SQLite on this device.</p>
+            </div>
+        </div>
+        <dl class="definition-list">
+            <div><dt>Network</dt><dd>Only read-only requests to <code>api.github.com</code>. Demo mode makes no network calls.</dd></div>
+            <div><dt>Telemetry</dt><dd>None. No analytics, tracking, cloud database, or paid service.</dd></div>
+            <div><dt>Freshness</dt><dd>15 minutes by default. A failed refresh keeps the last successful evidence visible and marked stale.</dd></div>
+        </dl>
+        <div class="inline-actions section-actions">
+            @if (!confirmClear)
+            {
+                <button type="button" class="button danger" @onclick="() => confirmClear = true">Clear all local data</button>
+            }
+            else
+            {
+                <button type="button" class="button danger" @onclick="ClearAsync">Confirm clear</button>
+                <button type="button" class="button secondary" @onclick="() => confirmClear = false">Cancel</button>
+                <span class="help-text">This removes saved repositories and cached snapshots from Gatehouse.</span>
+            }
+        </div>
+    </section>
+
+    <section class="panel" aria-labelledby="runtime-heading">
+        <h2 id="runtime-heading">Runtime boundary</h2>
+        <dl class="definition-list">
+            <div><dt>Binding</dt><dd>Loopback only. The default address is <code>http://localhost:5341</code>.</dd></div>
+            <div><dt>Mutations</dt><dd>Local API writes require a custom request header. Cross-origin browser requests are not allowed.</dd></div>
+            <div><dt>Shell access</dt><dd>None. Suggested worktree commands are plain text and are never run by Gatehouse.</dd></div>
+        </dl>
+    </section>
+</div>
+
+@code {
+    private bool confirmClear;
+    private string? message;
+
+    private async Task ClearAsync()
+    {
+        await Gatehouse.ClearAsync();
+        confirmClear = false;
+        message = "All saved repositories and cached snapshots were removed from Gatehouse.";
+    }
+}

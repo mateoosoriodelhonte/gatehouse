@@ -1,9 +1,63 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JavaScript
 
-@Body
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+<div class="app-shell">
+    <aside class="sidebar">
+        <a class="brand" href="/" aria-label="Gatehouse home">
+            <span class="brand-mark" aria-hidden="true">GH</span>
+            <span>
+                <strong>Gatehouse</strong>
+                <small>Change readiness</small>
+            </span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="/repositories">
+                <span aria-hidden="true">⌂</span>
+                Repositories
+            </a>
+            <a href="/settings">
+                <span aria-hidden="true">⚙</span>
+                Settings
+            </a>
+        </nav>
+
+        <div class="sidebar-note">
+            <span class="read-only-mark" aria-hidden="true">●</span>
+            <span><strong>Read-only V1</strong><small>Gatehouse cannot change GitHub.</small></span>
+        </div>
+    </aside>
+
+    <div class="content-shell">
+        <header class="topbar">
+            <p>Local-first engineering operations</p>
+            <button type="button" class="theme-toggle" @onclick="ToggleThemeAsync">
+                <span aria-hidden="true">@themeMark</span>
+                <span>@themeLabel</span>
+            </button>
+        </header>
+        <main id="main-content" tabindex="-1">
+            @Body
+        </main>
+    </div>
 </div>
+
+<div id="blazor-error-ui" data-nosnippet role="alert" aria-live="assertive">
+    Gatehouse hit an unexpected error.
+    <a href="." class="reload">Reload</a>
+    <button type="button" class="dismiss" aria-label="Dismiss error">×</button>
+</div>
+
+@code {
+    private bool lightTheme;
+    private string themeMark => lightTheme ? "☾" : "☀";
+    private string themeLabel => lightTheme ? "Use dark theme" : "Use light theme";
+
+    private async Task ToggleThemeAsync()
+    {
+        lightTheme = !lightTheme;
+        await JavaScript.InvokeVoidAsync("gatehouse.setTheme", lightTheme ? "light" : "dark");
+    }
+}
