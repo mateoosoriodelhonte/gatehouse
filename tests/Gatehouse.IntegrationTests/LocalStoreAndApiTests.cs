@@ -8,6 +8,7 @@ using Gatehouse.Application;
 using Gatehouse.Domain;
 using Gatehouse.Infrastructure.Persistence;
 using Gatehouse.Web;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
