@@ -25,13 +25,7 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore Gatehouse.slnx --force-evaluate
-
-      - name: Export generated browser lock
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-lock
-          path: tests/Gatehouse.BrowserTests/packages.lock.json
+        run: dotnet restore Gatehouse.slnx --locked-mode
 
       - name: Verify formatting
         run: dotnet format Gatehouse.slnx --no-restore --verify-no-changes
