@@ -38,10 +38,10 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
         page.PageError += (_, error) => browserErrors.Enqueue($"page error: {error}");
 
         await page.GotoAsync("/repositories");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Open demo repository" }).ClickAsync();
-        await page.WaitForURLAsync("**/overview");
+        await page.GetByRole(AriaRole.Link, new() { Name = "Open demo repository" }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "acme/payments" }))
             .ToBeVisibleAsync();
+        Assert.EndsWith("/overview", new Uri(page.Url).AbsolutePath, StringComparison.Ordinal);
         await Expect(page.GetByText("Open changes")).ToBeVisibleAsync();
 
         await page.GetByRole(AriaRole.Link, new() { Name = "Pull requests" }).ClickAsync();
