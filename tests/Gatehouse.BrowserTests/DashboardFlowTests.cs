@@ -51,6 +51,7 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
             .ToBeVisibleAsync();
         Assert.EndsWith("/overview", new Uri(page.Url).AbsolutePath, StringComparison.Ordinal);
         await Expect(page.GetByText("Open changes")).ToBeVisibleAsync();
+        await CaptureOverviewAsync(page, width);
 
         await page.GetByRole(AriaRole.Link, new() { Name = "Pull requests" }).ClickAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Blocked by CI" }).ClickAsync();
@@ -88,6 +89,23 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
     }
 
     private static ILocatorAssertions Expect(ILocator locator) => Assertions.Expect(locator);
+
+    private static async Task CaptureOverviewAsync(IPage page, int width)
+    {
+        var path = Environment.GetEnvironmentVariable("GATEHOUSE_SCREENSHOT_PATH");
+        if (width != 1440 || string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        await page.ScreenshotAsync(new() { Path = path, FullPage = true });
+    }
 
     private static async Task WaitForInteractiveAsync(
         IPage page,
