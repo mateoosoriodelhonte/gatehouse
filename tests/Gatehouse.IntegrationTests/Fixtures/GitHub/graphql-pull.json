@@ -23,9 +23,11 @@
           "login": "octo-dev"
         },
         "reviewRequests": {
+          "pageInfo": { "hasNextPage": false },
           "nodes": []
         },
         "reviews": {
+          "pageInfo": { "hasNextPage": false },
           "nodes": [
             {
               "author": {
@@ -38,6 +40,7 @@
           ]
         },
         "reviewThreads": {
+          "pageInfo": { "hasNextPage": false },
           "nodes": [
             {
               "isResolved": false
@@ -48,6 +51,7 @@
           ]
         },
         "closingIssuesReferences": {
+          "pageInfo": { "hasNextPage": false },
           "nodes": [
             {
               "number": 140,
@@ -58,6 +62,7 @@
         },
         "statusCheckRollup": {
           "contexts": {
+            "pageInfo": { "hasNextPage": false },
             "nodes": [
               {
                 "__typename": "CheckRun",
@@ -76,6 +81,7 @@
           }
         },
         "files": {
+          "pageInfo": { "hasNextPage": false },
           "nodes": [
             {
               "path": "src/retry-policy.cs",
