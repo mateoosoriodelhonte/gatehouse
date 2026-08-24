@@ -1,0 +1,26 @@
+[
+  {
+    "user": {
+      "login": "alice"
+    },
+    "state": "APPROVED",
+    "submitted_at": "2026-08-24T10:00:00Z",
+    "html_url": "https://github.com/acme/payments/pull/144#review-1"
+  },
+  {
+    "user": {
+      "login": "alice"
+    },
+    "state": "CHANGES_REQUESTED",
+    "submitted_at": "2026-08-24T11:00:00Z",
+    "html_url": "https://github.com/acme/payments/pull/144#review-2"
+  },
+  {
+    "user": {
+      "login": "bob"
+    },
+    "state": "COMMENTED",
+    "submitted_at": "2026-08-24T11:30:00Z",
+    "html_url": "https://github.com/acme/payments/pull/144#review-3"
+  }
+]

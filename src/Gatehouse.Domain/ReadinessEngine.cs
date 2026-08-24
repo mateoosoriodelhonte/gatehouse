@@ -132,13 +132,19 @@ public static class ReadinessEngine
 
         foreach (var check in checks)
         {
-            if (check.State == CheckState.Success)
+            if (check.State is CheckState.Success or CheckState.Skipped or CheckState.Neutral)
             {
+                var summary = check.State switch
+                {
+                    CheckState.Skipped => "The check was skipped.",
+                    CheckState.Neutral => "The check completed with a neutral conclusion.",
+                    _ => "The check passed.",
+                };
                 context.Rule(
                     $"check:{check.Name}",
                     check.Name,
                     RuleOutcome.Passed,
-                    "The check passed.",
+                    summary,
                     check.Url);
                 continue;
             }
@@ -231,7 +237,21 @@ public static class ReadinessEngine
                 "review-threads",
                 "Review threads",
                 RuleOutcome.Advisory,
-                $"{count} unresolved thread(s); policy does not require resolution.",
+                count is null
+                    ? "Review thread state is unknown; policy does not require it."
+                    : $"{count} unresolved thread(s); policy does not require resolution.",
+                context.Snapshot.Url);
+        }
+        else if (count is null)
+        {
+            context.Flag(
+                "review-threads",
+                "Review threads",
+                RuleOutcome.Unknown,
+                "The unresolved review thread count is unknown.",
+                "review_threads_unknown",
+                "Unresolved review thread state is unknown.",
+                ReadinessImpact.Unknown,
                 context.Snapshot.Url);
         }
         else if (count == 0)

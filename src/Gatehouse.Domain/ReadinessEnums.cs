@@ -33,6 +33,8 @@ public enum CheckState
     Cancelled,
     ActionRequired,
     NotExecuted,
+    Skipped,
+    Neutral,
 }
 
 public enum ReviewDecision

@@ -12,6 +12,13 @@ public sealed record IssueLink(
     bool IsClosed,
     string? Url);
 
+public sealed record ChangedFile(
+    string Path,
+    string ChangeType,
+    int Additions,
+    int Deletions,
+    string? Url);
+
 public sealed record PullRequestSnapshot
 {
     public required RepositorySlug Repository { get; init; }
@@ -34,7 +41,7 @@ public sealed record PullRequestSnapshot
 
     public required int RequestedReviewerCount { get; init; }
 
-    public required int UnresolvedReviewThreadCount { get; init; }
+    public required int? UnresolvedReviewThreadCount { get; init; }
 
     public required BranchFreshness BranchFreshness { get; init; }
 
@@ -61,4 +68,6 @@ public sealed record PullRequestSnapshot
     public required int Additions { get; init; }
 
     public required int Deletions { get; init; }
+
+    public required IReadOnlyList<ChangedFile> Files { get; init; }
 }

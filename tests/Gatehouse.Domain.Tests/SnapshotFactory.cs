@@ -37,5 +37,6 @@ internal static class SnapshotFactory
         ChangedFiles = 4,
         Additions = 83,
         Deletions = 12,
+        Files = [],
     };
 }

@@ -1,0 +1,91 @@
+{
+  "data": {
+    "repository": {
+      "pullRequest": {
+        "number": 145,
+        "title": "Update payment retry policy",
+        "body": "Resolves #140",
+        "state": "OPEN",
+        "isDraft": false,
+        "url": "https://github.com/acme/payments/pull/145",
+        "updatedAt": "2026-08-24T13:00:00Z",
+        "baseRefName": "main",
+        "baseRefOid": "base-graphql",
+        "headRefName": "feature/retries",
+        "headRefOid": "head-graphql",
+        "additions": 70,
+        "deletions": 8,
+        "changedFiles": 1,
+        "mergeable": "CONFLICTING",
+        "mergeStateStatus": "DIRTY",
+        "reviewDecision": "APPROVED",
+        "author": {
+          "login": "octo-dev"
+        },
+        "reviewRequests": {
+          "nodes": []
+        },
+        "reviews": {
+          "nodes": [
+            {
+              "author": {
+                "login": "maintainer"
+              },
+              "state": "APPROVED",
+              "submittedAt": "2026-08-24T12:30:00Z",
+              "url": "https://github.com/acme/payments/pull/145#review-1"
+            }
+          ]
+        },
+        "reviewThreads": {
+          "nodes": [
+            {
+              "isResolved": false
+            },
+            {
+              "isResolved": true
+            }
+          ]
+        },
+        "closingIssuesReferences": {
+          "nodes": [
+            {
+              "number": 140,
+              "state": "CLOSED",
+              "url": "https://github.com/acme/payments/issues/140"
+            }
+          ]
+        },
+        "statusCheckRollup": {
+          "contexts": {
+            "nodes": [
+              {
+                "__typename": "CheckRun",
+                "name": "build",
+                "status": "COMPLETED",
+                "conclusion": "NEUTRAL",
+                "detailsUrl": "https://github.com/acme/payments/actions/runs/5"
+              },
+              {
+                "__typename": "StatusContext",
+                "context": "deploy-preview",
+                "state": "PENDING",
+                "targetUrl": "https://example.test/deploy/5"
+              }
+            ]
+          }
+        },
+        "files": {
+          "nodes": [
+            {
+              "path": "src/retry-policy.cs",
+              "changeType": "MODIFIED",
+              "additions": 70,
+              "deletions": 8
+            }
+          ]
+        }
+      }
+    }
+  }
+}

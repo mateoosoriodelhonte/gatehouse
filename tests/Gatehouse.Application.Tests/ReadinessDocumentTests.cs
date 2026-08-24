@@ -72,5 +72,6 @@ public sealed class ReadinessDocumentTests
         ChangedFiles = 2,
         Additions = 20,
         Deletions = 3,
+        Files = [],
     };
 }
