@@ -1,0 +1,21 @@
+<nav class="repository-nav" aria-label="Repository views">
+    <a href="/repositories/@RepositoryId/overview">Overview</a>
+    <a href="/repositories/@RepositoryId/pull-requests">Pull requests</a>
+    <a href="/repositories/@RepositoryId/triage">
+        Batch triage
+        @if (SelectedCount > 0)
+        {
+            <span class="nav-count">@SelectedCount</span>
+        }
+    </a>
+    <a href="/repositories/@RepositoryId/reports">Reports</a>
+    <a href="/repositories/@RepositoryId/policy">Policy</a>
+</nav>
+
+@code {
+    [Parameter, EditorRequired]
+    public Guid RepositoryId { get; set; }
+
+    [Parameter]
+    public int SelectedCount { get; set; }
+}

@@ -33,6 +33,8 @@ public sealed class GitHubSnapshotNormalizerTests
         Assert.Equal(Mergeability.Clean, snapshot.Mergeability);
         Assert.Equal(ReviewDecision.ChangesRequested, snapshot.ReviewDecision);
         Assert.Equal(0, snapshot.ApprovalCount);
+        Assert.Equal(["maintainer", "payments-team"], snapshot.RequestedReviewers);
+        Assert.Equal(["bug"], snapshot.Labels);
         Assert.Null(snapshot.UnresolvedReviewThreadCount);
         Assert.Equal(BranchFreshness.Behind, snapshot.BranchFreshness);
         Assert.Contains(snapshot.Checks, check =>
@@ -72,6 +74,8 @@ public sealed class GitHubSnapshotNormalizerTests
         Assert.Equal(Mergeability.Conflicting, snapshot.Mergeability);
         Assert.Equal(ReviewDecision.Approved, snapshot.ReviewDecision);
         Assert.Equal(1, snapshot.ApprovalCount);
+        Assert.Equal(["release-captain"], snapshot.RequestedReviewers);
+        Assert.Equal(["payments"], snapshot.Labels);
         Assert.Equal(1, snapshot.UnresolvedReviewThreadCount);
         Assert.Equal(BranchFreshness.Unknown, snapshot.BranchFreshness);
         Assert.Contains(snapshot.Checks, check =>

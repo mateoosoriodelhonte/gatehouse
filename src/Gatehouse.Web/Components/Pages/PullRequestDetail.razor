@@ -1,0 +1,233 @@
+@page "/repositories/{RepositoryId:guid}/pull-requests/{PullRequestNumber:int}"
+@inject GatehouseUiService Gatehouse
+@inject UiSessionState Session
+
+<PageTitle>PR #@PullRequestNumber · Gatehouse</PageTitle>
+
+@if (repository is null)
+{
+    <p class="loading-line" role="status">Loading review packet…</p>
+}
+else if (pullRequest is null)
+{
+    <div class="alert error" role="alert">
+        Pull request #@PullRequestNumber is not in the current cache.
+        <a href="/repositories/@RepositoryId/pull-requests">Return to pull requests.</a>
+    </div>
+}
+else
+{
+    <div class="page-stack">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">@repository.Repository.Owner/@repository.Repository.Name · PR #@pullRequest.Snapshot.Number</p>
+                <h1>@pullRequest.Snapshot.Title</h1>
+                <p>@pullRequest.Evaluation.Summary</p>
+            </div>
+            <div class="header-actions">
+                <StatusBadge Status="pullRequest.Evaluation.Status" />
+                @if (SafeUrl(pullRequest.Snapshot.Url) is { } pullRequestUrl)
+                {
+                    <a class="button secondary" href="@pullRequestUrl" target="_blank" rel="noopener noreferrer">Open evidence</a>
+                }
+            </div>
+        </header>
+
+        <RepositoryNav RepositoryId="RepositoryId" SelectedCount="Session.SelectedPullRequests.Count" />
+
+        <div class="detail-grid">
+            <div class="page-stack">
+                <section class="detail-card" aria-labelledby="verdict-heading">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Deterministic verdict</p>
+                            <h2 id="verdict-heading">@pullRequest.Evaluation.NextAction</h2>
+                        </div>
+                        <span class="fact-pill">Policy v@pullRequest.Evaluation.PolicyVersion</span>
+                    </div>
+                    @if (pullRequest.Evaluation.Blockers.Count == 0)
+                    {
+                        <div class="alert">All configured readiness gates pass.</div>
+                    }
+                    else
+                    {
+                        <ul class="blocker-list">
+                            @foreach (var blocker in pullRequest.Evaluation.Blockers)
+                            {
+                                <li class="blocker-item">
+                                    <span><strong>@blocker.Summary</strong><br /><span class="muted">@BlockerImpact(blocker)</span></span>
+                                    @if (SafeUrl(blocker.EvidenceUrl) is { } blockerUrl)
+                                    {
+                                        <a href="@blockerUrl" target="_blank" rel="noopener noreferrer">Evidence</a>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </section>
+
+                <section class="detail-card" aria-labelledby="evidence-heading">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="evidence-heading">Policy evidence</h2>
+                            <p>Each claim comes from saved GitHub facts and the selected repository policy.</p>
+                        </div>
+                    </div>
+                    <ul class="evidence-list">
+                        @foreach (var rule in pullRequest.Evaluation.Rules)
+                        {
+                            <li class="evidence-item">
+                                <span>
+                                    <strong>@rule.Label · @rule.Outcome</strong>
+                                    <span>@rule.Summary</span>
+                                </span>
+                                @if (SafeUrl(rule.EvidenceUrl) is { } evidenceUrl)
+                                {
+                                    <a href="@evidenceUrl" target="_blank" rel="noopener noreferrer">Source</a>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </section>
+
+                <section class="detail-card" aria-labelledby="checks-heading">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="checks-heading">Checks</h2>
+                            <p>Required, optional, waiting, and failed states stay distinct.</p>
+                        </div>
+                    </div>
+                    @if (pullRequest.Snapshot.Checks.Count == 0)
+                    {
+                        <p class="muted">GitHub reported no checks.</p>
+                    }
+                    else
+                    {
+                        <ul class="check-list">
+                            @foreach (var check in pullRequest.Snapshot.Checks)
+                            {
+                                <li class="check-item">
+                                    <span>
+                                        <strong>@check.Name</strong>
+                                        <span>@(check.IsRequired ? "Required" : "Optional") · @check.State</span>
+                                    </span>
+                                    @if (SafeUrl(check.Url) is { } checkUrl)
+                                    {
+                                        <a href="@checkUrl" target="_blank" rel="noopener noreferrer">Run</a>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </section>
+
+                <section class="detail-card" aria-labelledby="files-heading">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="files-heading">Changed files</h2>
+                            <p>@pullRequest.Snapshot.ChangedFiles files · +@pullRequest.Snapshot.Additions / -@pullRequest.Snapshot.Deletions</p>
+                        </div>
+                    </div>
+                    <ul class="file-list">
+                        @foreach (var file in pullRequest.Snapshot.Files)
+                        {
+                            <li class="file-item">
+                                <span><strong>@file.Path</strong><br /><span>@file.ChangeType · +@file.Additions / -@file.Deletions</span></span>
+                                @if (SafeUrl(file.Url) is { } fileUrl)
+                                {
+                                    <a href="@fileUrl" target="_blank" rel="noopener noreferrer">View</a>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </section>
+            </div>
+
+            <aside class="page-stack" aria-label="Review packet summary">
+                <section class="detail-card" aria-labelledby="packet-heading">
+                    <h2 id="packet-heading">Review packet</h2>
+                    <dl class="fact-grid">
+                        <div><dt>Author</dt><dd>@pullRequest.Snapshot.Author</dd></div>
+                        <div><dt>Mergeability</dt><dd>@pullRequest.Snapshot.Mergeability</dd></div>
+                        <div><dt>Review</dt><dd>@pullRequest.Snapshot.ReviewDecision</dd></div>
+                        <div><dt>Approvals</dt><dd>@pullRequest.Snapshot.ApprovalCount</dd></div>
+                        <div><dt>Open threads</dt><dd>@ThreadCount</dd></div>
+                        <div><dt>Freshness</dt><dd>@pullRequest.Snapshot.BranchFreshness</dd></div>
+                        <div><dt>Base</dt><dd>@pullRequest.Snapshot.BaseBranch</dd></div>
+                        <div><dt>Head</dt><dd>@pullRequest.Snapshot.HeadBranch</dd></div>
+                        <div><dt>Updated</dt><dd>@pullRequest.Snapshot.UpdatedAt.ToString("MMM d, HH:mm")</dd></div>
+                    </dl>
+                    <h3>Requested reviewers</h3>
+                    <p class="muted">@(pullRequest.Snapshot.RequestedReviewers.Count == 0
+                        ? "None"
+                        : string.Join(", ", pullRequest.Snapshot.RequestedReviewers))</p>
+                    <h3>Labels</h3>
+                    <div class="inline-actions">
+                        @if (pullRequest.Snapshot.Labels.Count == 0)
+                        {
+                            <span class="muted">None</span>
+                        }
+                        @foreach (var label in pullRequest.Snapshot.Labels)
+                        {
+                            <span class="label-chip">@label</span>
+                        }
+                    </div>
+                </section>
+
+                <section class="detail-card" aria-labelledby="report-heading">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="report-heading">Handoff report</h2>
+                            <p>Stored deterministic output. Markdown is shown as plain text.</p>
+                        </div>
+                    </div>
+                    <pre class="report-text">@pullRequest.ReportMarkdown</pre>
+                    <ClipboardButton Text="@pullRequest.ReportMarkdown" />
+                </section>
+
+                <section class="detail-card" aria-labelledby="worktree-heading">
+                    <h2 id="worktree-heading">Optional worktree command</h2>
+                    <p class="help-text">Gatehouse only suggests this command. It never runs Git.</p>
+                    <pre class="command-preview">@WorktreeCommand</pre>
+                    <ClipboardButton Text="@WorktreeCommand" Label="Copy command" />
+                </section>
+            </aside>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid RepositoryId { get; set; }
+
+    [Parameter]
+    public int PullRequestNumber { get; set; }
+
+    private LocalRepositoryDetail? repository;
+    private CachedPullRequestReadiness? pullRequest;
+
+    private string ThreadCount => pullRequest?.Snapshot.UnresolvedReviewThreadCount?.ToString() ?? "Unknown";
+    private string WorktreeCommand => pullRequest is null
+        ? string.Empty
+        : $"git worktree add '../repo-pr-{pullRequest.Snapshot.Number}' " +
+          $"-b 'review/{pullRequest.Snapshot.Number}' 'origin/{ShellQuote(pullRequest.Snapshot.BaseBranch)}'";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Session.SelectRepository(RepositoryId);
+        repository = await Gatehouse.GetRepositoryAsync(RepositoryId);
+        pullRequest = repository?.PullRequests.SingleOrDefault(item =>
+            item.Snapshot.Number == PullRequestNumber);
+    }
+
+    private static string? SafeUrl(string? value) => GatehouseUiService.SafeEvidenceUrl(value);
+
+    private static string BlockerImpact(ReadinessBlocker blocker) => blocker.Impact switch
+    {
+        ReadinessImpact.Blocked => "Must be resolved",
+        ReadinessImpact.Review => "Review gate",
+        _ => "Evidence incomplete",
+    };
+
+    private static string ShellQuote(string value) => value.Replace("'", "'\"'\"'", StringComparison.Ordinal);
+}

@@ -1,0 +1,228 @@
+@page "/repositories/{RepositoryId:guid}/pull-requests"
+@inject GatehouseUiService Gatehouse
+@inject UiSessionState Session
+
+<PageTitle>Pull requests · Gatehouse</PageTitle>
+
+@if (repository is null)
+{
+    <p class="loading-line" role="status">Loading pull requests…</p>
+}
+else
+{
+    <div class="page-stack">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">@repository.Repository.Owner/@repository.Repository.Name</p>
+                <h1>Pull requests</h1>
+                <p>Filter the final readiness result and the evidence that supports it.</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="button secondary" @onclick="SelectVisible">
+                    Select visible (@Filtered.Count)
+                </button>
+                <a class="button" href="/repositories/@RepositoryId/triage">
+                    Triage selected (@Session.SelectedPullRequests.Count)
+                </a>
+            </div>
+        </header>
+
+        <RepositoryNav RepositoryId="RepositoryId" SelectedCount="Session.SelectedPullRequests.Count" />
+
+        <section class="panel" aria-labelledby="filters-heading">
+            <div class="panel-header">
+                <div>
+                    <h2 id="filters-heading">Filters</h2>
+                    <p>@Filtered.Count of @repository.PullRequests.Count changes shown</p>
+                </div>
+                <button type="button" class="button secondary" @onclick="ClearFilters">Clear filters</button>
+            </div>
+            <div class="quick-filters" aria-label="Quick filters">
+                <button type="button" class="quick-filter @ActiveClass(IsReadyFilter)" @onclick="ShowReady">Ready now</button>
+                <button type="button" class="quick-filter @ActiveClass(IsCiBlockedFilter)" @onclick="ShowCiBlocked">Blocked by CI</button>
+                <button type="button" class="quick-filter @ActiveClass(IsReviewFilter)" @onclick="ShowWaitingReview">Waiting for review</button>
+                <button type="button" class="quick-filter @ActiveClass(IsConflictFilter)" @onclick="ShowConflicts">Merge conflicts</button>
+            </div>
+            <div class="filter-grid">
+                <div class="field">
+                    <label for="filter-search">Search title or number</label>
+                    <input id="filter-search" @bind="search" @bind:event="oninput" placeholder="#142 or pagination" />
+                </div>
+                <div class="field">
+                    <label for="filter-status">Readiness</label>
+                    <select id="filter-status" @bind="statusFilter">
+                        <option value="">All statuses</option>
+                        <option value="go">GO</option>
+                        <option value="review">REVIEW</option>
+                        <option value="blocked">BLOCKED</option>
+                        <option value="draft">DRAFT</option>
+                        <option value="unknown">UNKNOWN</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="filter-author">Author</label>
+                    <input id="filter-author" @bind="author" @bind:event="oninput" placeholder="maya-dev" />
+                </div>
+                <div class="field">
+                    <label for="filter-label">Label</label>
+                    <input id="filter-label" @bind="label" @bind:event="oninput" placeholder="bug" />
+                </div>
+                <div class="field">
+                    <label for="filter-branch">Branch</label>
+                    <input id="filter-branch" @bind="branch" @bind:event="oninput" placeholder="feature/" />
+                </div>
+                <div class="field">
+                    <label for="filter-reviewer">Requested reviewer</label>
+                    <input id="filter-reviewer" @bind="reviewer" @bind:event="oninput" placeholder="release-captain" />
+                </div>
+                <div class="field">
+                    <label for="filter-ci">CI state</label>
+                    <select id="filter-ci" @bind="ciFilter">
+                        <option value="">All CI states</option>
+                        <option value="passing">Passing</option>
+                        <option value="blocked">Blocked</option>
+                        <option value="pending">Pending</option>
+                        <option value="notrun">Not run</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="filter-draft">Draft state</label>
+                    <select id="filter-draft" @bind="draftFilter">
+                        <option value="">All changes</option>
+                        <option value="ready">Ready for review</option>
+                        <option value="draft">Draft only</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" aria-labelledby="pull-request-results-heading">
+            <div class="panel-header">
+                <div>
+                    <h2 id="pull-request-results-heading">Results</h2>
+                    <p role="status" aria-live="polite">@Filtered.Count changes match the current filters.</p>
+                </div>
+            </div>
+            @if (Filtered.Count == 0)
+            {
+                <div class="empty-state">
+                    <h3>No matching changes</h3>
+                    <p>Clear a filter or refresh the repository evidence.</p>
+                </div>
+            }
+            else
+            {
+                <PullRequestTable RepositoryId="RepositoryId"
+                                  Items="Filtered"
+                                  SelectedNumbers="Session.SelectedPullRequests"
+                                  SelectionChanged="SetSelected" />
+            }
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid RepositoryId { get; set; }
+
+    private LocalRepositoryDetail? repository;
+    private string search = string.Empty;
+    private string statusFilter = string.Empty;
+    private string author = string.Empty;
+    private string label = string.Empty;
+    private string branch = string.Empty;
+    private string reviewer = string.Empty;
+    private string ciFilter = string.Empty;
+    private string draftFilter = string.Empty;
+    private bool conflictOnly;
+
+    private IReadOnlyList<CachedPullRequestReadiness> Filtered => repository is null
+        ? []
+        : PullRequestFilters.Apply(repository.PullRequests, CurrentFilter)
+            .Where(item => !conflictOnly || item.Snapshot.Mergeability == Mergeability.Conflicting)
+            .ToArray();
+
+    private PullRequestFilter CurrentFilter => new(
+        ParseStatus(statusFilter),
+        search,
+        author,
+        label,
+        branch,
+        reviewer,
+        ParseCi(ciFilter),
+        ParseDraft(draftFilter));
+
+    private bool IsReadyFilter => statusFilter == "go" && !conflictOnly;
+    private bool IsCiBlockedFilter => ciFilter == "blocked" && !conflictOnly;
+    private bool IsReviewFilter => statusFilter == "review" && !conflictOnly;
+    private bool IsConflictFilter => conflictOnly;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Session.SelectRepository(RepositoryId);
+        repository = await Gatehouse.GetRepositoryAsync(RepositoryId);
+    }
+
+    private void SetSelected((int Number, bool Selected) change) =>
+        Session.SetPullRequestSelected(change.Number, change.Selected);
+
+    private void SelectVisible()
+    {
+        foreach (var item in Filtered)
+        {
+            Session.SetPullRequestSelected(item.Snapshot.Number, true);
+        }
+    }
+
+    private void ShowReady()
+    {
+        ClearFilters();
+        statusFilter = "go";
+    }
+
+    private void ShowCiBlocked()
+    {
+        ClearFilters();
+        ciFilter = "blocked";
+    }
+
+    private void ShowWaitingReview()
+    {
+        ClearFilters();
+        statusFilter = "review";
+    }
+
+    private void ShowConflicts()
+    {
+        ClearFilters();
+        conflictOnly = true;
+    }
+
+    private void ClearFilters()
+    {
+        search = string.Empty;
+        statusFilter = string.Empty;
+        author = string.Empty;
+        label = string.Empty;
+        branch = string.Empty;
+        reviewer = string.Empty;
+        ciFilter = string.Empty;
+        draftFilter = string.Empty;
+        conflictOnly = false;
+    }
+
+    private static string ActiveClass(bool active) => active ? "active" : string.Empty;
+
+    private static ReadinessStatus? ParseStatus(string value) =>
+        Enum.TryParse<ReadinessStatus>(value, true, out var result) ? result : null;
+
+    private static PullRequestCiFilter ParseCi(string value) =>
+        Enum.TryParse<PullRequestCiFilter>(value, true, out var result)
+            ? result
+            : PullRequestCiFilter.All;
+
+    private static PullRequestDraftFilter ParseDraft(string value) =>
+        Enum.TryParse<PullRequestDraftFilter>(value, true, out var result)
+            ? result
+            : PullRequestDraftFilter.All;
+}

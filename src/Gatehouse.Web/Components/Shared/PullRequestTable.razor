@@ -1,0 +1,98 @@
+<div class="table-scroll" role="region" aria-label="Pull request readiness table" tabindex="0">
+    <table class="readiness-table">
+        <caption class="sr-only">Pull requests and their current readiness</caption>
+        <thead>
+            <tr>
+                <th scope="col" class="select-column">Select</th>
+                <th scope="col">Change</th>
+                <th scope="col">Readiness</th>
+                <th scope="col">CI</th>
+                <th scope="col">Review</th>
+                <th scope="col">Updated</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Items)
+            {
+                <tr @key="item.Snapshot.Number">
+                    <td>
+                        <input type="checkbox"
+                               checked="@SelectedNumbers.Contains(item.Snapshot.Number)"
+                               aria-label="Select PR #@item.Snapshot.Number for batch triage"
+                               @onchange="args => SelectionChangedAsync(item.Snapshot.Number, args)" />
+                    </td>
+                    <td>
+                        <div class="change-title">
+                            <span class="change-number">#@item.Snapshot.Number</span>
+                            <a href="/repositories/@RepositoryId/pull-requests/@item.Snapshot.Number">
+                                @item.Snapshot.Title
+                            </a>
+                        </div>
+                        <div class="change-meta">
+                            <span>@item.Snapshot.Author</span>
+                            <span>@item.Snapshot.HeadBranch</span>
+                            @foreach (var label in item.Snapshot.Labels.Take(2))
+                            {
+                                <span class="label-chip">@label</span>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <StatusBadge Status="item.Evaluation.Status" />
+                        <span class="primary-finding">@PrimaryFinding(item)</span>
+                    </td>
+                    <td><span class="fact-state">@CiLabel(item.Snapshot.Checks)</span></td>
+                    <td><span class="fact-state">@ReviewLabel(item.Snapshot)</span></td>
+                    <td>
+                        <time datetime="@item.Snapshot.UpdatedAt.ToString("O")">
+                            @item.Snapshot.UpdatedAt.ToString("MMM d, HH:mm")
+                        </time>
+                    </td>
+                    <td>
+                        <a class="row-action" href="/repositories/@RepositoryId/pull-requests/@item.Snapshot.Number">
+                            Review packet
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Guid RepositoryId { get; set; }
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<CachedPullRequestReadiness> Items { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public IReadOnlySet<int> SelectedNumbers { get; set; } = new HashSet<int>();
+
+    [Parameter]
+    public EventCallback<(int Number, bool Selected)> SelectionChanged { get; set; }
+
+    private Task SelectionChangedAsync(int number, ChangeEventArgs args) =>
+        SelectionChanged.InvokeAsync((number, args.Value is true || args.Value?.ToString() == "true"));
+
+    private static string PrimaryFinding(CachedPullRequestReadiness item) =>
+        item.Evaluation.Blockers.FirstOrDefault()?.Summary ?? "All configured gates pass.";
+
+    private static string CiLabel(IReadOnlyList<CheckSnapshot> checks) =>
+        PullRequestFilters.ClassifyCi(checks) switch
+        {
+            PullRequestCiFilter.Passing => "Passing",
+            PullRequestCiFilter.Blocked => "Blocked",
+            PullRequestCiFilter.Pending => "Pending",
+            _ => "Not run",
+        };
+
+    private static string ReviewLabel(PullRequestSnapshot snapshot) => snapshot.ReviewDecision switch
+    {
+        ReviewDecision.Approved => $"Approved ({snapshot.ApprovalCount})",
+        ReviewDecision.ChangesRequested => "Changes requested",
+        ReviewDecision.ReviewRequired => "Waiting",
+        _ => "Unknown",
+    };
+}

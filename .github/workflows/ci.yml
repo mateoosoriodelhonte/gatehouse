@@ -33,8 +33,21 @@ jobs:
       - name: Build
         run: dotnet build Gatehouse.slnx --configuration Release --no-restore
 
+      - name: Install browser
+        run: pwsh tests/Gatehouse.BrowserTests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
       - name: Test
         run: dotnet test Gatehouse.slnx --configuration Release --no-build --logger "console;verbosity=normal"
+        env:
+          GATEHOUSE_SCREENSHOT_PATH: ${{ github.workspace }}/artifacts/browser/gatehouse-dashboard.png
+
+      - name: Save dashboard screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatehouse-dashboard
+          path: artifacts/browser/gatehouse-dashboard.png
+          if-no-files-found: ignore
 
       - name: Check vulnerable dependencies
         run: dotnet list Gatehouse.slnx package --vulnerable --include-transitive

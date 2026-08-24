@@ -1,0 +1,31 @@
+@inject IJSRuntime JavaScript
+
+<div class="copy-control">
+    <button type="button" class="button secondary" @onclick="CopyAsync">
+        @Label
+    </button>
+    <span class="copy-status" role="status" aria-live="polite">@message</span>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Text { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Label { get; set; } = "Copy report";
+
+    private string message = string.Empty;
+
+    private async Task CopyAsync()
+    {
+        try
+        {
+            await JavaScript.InvokeVoidAsync("gatehouse.copyText", Text);
+            message = "Copied to clipboard.";
+        }
+        catch (JSException)
+        {
+            message = "Copy failed. Select the text and copy it manually.";
+        }
+    }
+}

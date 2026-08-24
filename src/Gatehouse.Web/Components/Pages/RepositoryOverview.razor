@@ -1,0 +1,147 @@
+@page "/repositories/{RepositoryId:guid}/overview"
+@inject GatehouseUiService Gatehouse
+@inject UiSessionState Session
+
+<PageTitle>@Title · Gatehouse</PageTitle>
+
+@if (loading)
+{
+    <p class="loading-line" role="status">Loading repository readiness…</p>
+}
+else if (repository is null)
+{
+    <div class="alert error" role="alert">
+        This repository is not available. <a href="/repositories">Choose another repository.</a>
+    </div>
+}
+else
+{
+    <div class="page-stack">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">@(IsDemo ? "Demo data · Repository readiness" : "Repository readiness")</p>
+                <h1>@repository.Repository.Owner/@repository.Repository.Name</h1>
+                <p>@OverviewSummary</p>
+            </div>
+            <div class="header-actions">
+                @if (!IsDemo)
+                {
+                    <button type="button" class="button" disabled="@refreshing" @onclick="RefreshAsync">
+                        @(refreshing ? "Refreshing…" : "Refresh GitHub")
+                    </button>
+                }
+                <a class="button secondary" href="/repositories">Switch repository</a>
+            </div>
+        </header>
+
+        <RepositoryNav RepositoryId="RepositoryId" SelectedCount="Session.SelectedPullRequests.Count" />
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert" role="status" aria-live="polite">@message</div>
+        }
+
+        @foreach (var warning in repository.Repository.Warnings)
+        {
+            <div class="alert warning" role="status">@warning</div>
+        }
+
+        <section class="metric-grid" aria-label="Readiness overview">
+            <article class="metric-card">
+                <strong>@repository.PullRequests.Count</strong>
+                <span>Open changes</span>
+            </article>
+            <article class="metric-card go">
+                <strong>@Count(ReadinessStatus.Go)</strong>
+                <span>Ready now</span>
+            </article>
+            <article class="metric-card review">
+                <strong>@Count(ReadinessStatus.Review)</strong>
+                <span>Needs review</span>
+            </article>
+            <article class="metric-card blocked">
+                <strong>@Count(ReadinessStatus.Blocked)</strong>
+                <span>Blocked</span>
+            </article>
+            <article class="metric-card draft">
+                <strong>@Count(ReadinessStatus.Draft)</strong>
+                <span>Draft</span>
+            </article>
+        </section>
+
+        <section class="panel" aria-labelledby="priority-heading">
+            <div class="panel-header">
+                <div>
+                    <h2 id="priority-heading">Change readiness</h2>
+                    <p>Final verdicts come from the repository policy and saved GitHub evidence.</p>
+                </div>
+                <a href="/repositories/@RepositoryId/pull-requests">Filter all changes</a>
+            </div>
+            @if (repository.PullRequests.Count == 0)
+            {
+                <div class="empty-state">
+                    <h3>No cached pull requests</h3>
+                    <p>Refresh GitHub to load open changes. Cached evidence remains available during an outage.</p>
+                </div>
+            }
+            else
+            {
+                <PullRequestTable RepositoryId="RepositoryId"
+                                  Items="repository.PullRequests"
+                                  SelectedNumbers="Session.SelectedPullRequests"
+                                  SelectionChanged="SetSelected" />
+            }
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid RepositoryId { get; set; }
+
+    private LocalRepositoryDetail? repository;
+    private bool loading = true;
+    private bool refreshing;
+    private string? message;
+
+    private bool IsDemo => RepositoryId == DemoReadinessCatalog.RepositoryId;
+    private string Title => repository is null
+        ? "Repository"
+        : $"{repository.Repository.Owner}/{repository.Repository.Name}";
+    private string OverviewSummary => repository is null
+        ? string.Empty
+        : $"{Count(ReadinessStatus.Go)} ready, {Count(ReadinessStatus.Blocked)} blocked, " +
+          $"last refreshed {repository.Repository.LastSuccessfulRefreshAt:MMM d, HH:mm}.";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true;
+        Session.SelectRepository(RepositoryId);
+        repository = await Gatehouse.GetRepositoryAsync(RepositoryId);
+        loading = false;
+    }
+
+    private int Count(ReadinessStatus status) =>
+        repository?.PullRequests.Count(item => item.Evaluation.Status == status) ?? 0;
+
+    private void SetSelected((int Number, bool Selected) change) =>
+        Session.SetPullRequestSelected(change.Number, change.Selected);
+
+    private async Task RefreshAsync()
+    {
+        refreshing = true;
+        message = null;
+        try
+        {
+            var result = await Gatehouse.RefreshAsync(RepositoryId);
+            repository = result?.Repository ?? await Gatehouse.GetRepositoryAsync(RepositoryId);
+            message = result is null
+                ? "The repository is no longer available."
+                : $"Refresh finished with {result.Status}. Saved {result.StoredSnapshotCount} pull request snapshots.";
+        }
+        finally
+        {
+            refreshing = false;
+        }
+    }
+}

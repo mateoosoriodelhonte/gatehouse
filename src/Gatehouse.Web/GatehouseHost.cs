@@ -3,8 +3,10 @@ using System.Text.Json.Serialization;
 using Gatehouse.Application;
 using Gatehouse.Infrastructure.GitHub;
 using Gatehouse.Infrastructure.Persistence;
+using Gatehouse.Web.Ui;
 using Gatehouse.Web.Components;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -70,8 +72,14 @@ public static class GatehouseHost
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         builder.Services.AddSingleton<ILocalReadinessStore, LocalReadinessStore>();
+        builder.Services.AddScoped<GatehouseUiService>();
+        builder.Services.AddScoped<UiSessionState>();
         configureServices?.Invoke(builder.Services);
         var enableUi = builder.Configuration.GetValue("Gatehouse:EnableUi", true);
+        if (enableUi)
+        {
+            StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
+        }
 
         var app = builder.Build();
         await MigrateDatabaseAsync(app.Services, cancellationToken);
