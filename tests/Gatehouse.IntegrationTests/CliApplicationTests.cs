@@ -42,7 +42,7 @@ public sealed class CliApplicationTests
             Ready pull requests for acme/payments: 1
             GO      #142 Add pagination to audit endpoint
                     Next: Ready for maintainer review or merge.
-            """.ReplaceLineEndings(),
+            """.ReplaceLineEndings() + Environment.NewLine,
             result.Output);
     }
 
@@ -72,7 +72,7 @@ public sealed class CliApplicationTests
         Assert.StartsWith("GO for review.", result.Output, StringComparison.Ordinal);
         Assert.Contains("PR #142", result.Output, StringComparison.Ordinal);
         Assert.Contains(
-            "Recommendation: ready for maintainer review/merge.",
+            "Recommendation: ready for maintainer review or merge.",
             result.Output,
             StringComparison.Ordinal);
     }
