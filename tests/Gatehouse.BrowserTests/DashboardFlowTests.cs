@@ -146,6 +146,7 @@ public sealed class GatehouseBrowserFixture : IAsyncLifetime, IDisposable
             Path.Combine(webProjectDirectory, "bin", "Release", "net10.0", "Gatehouse.Web.dll"));
 
         startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
+        startInfo.Environment["ReloadStaticAssetsAtRuntime"] = "false";
         startInfo.Environment["ConnectionStrings__Gatehouse"] = $"Data Source={databasePath}";
         startInfo.Environment["Gatehouse__Port"] = port.ToString(
             System.Globalization.CultureInfo.InvariantCulture);
