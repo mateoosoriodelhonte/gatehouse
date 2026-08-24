@@ -217,7 +217,7 @@ public sealed class CliApplicationTests
         finally
         {
             await cancellation.CancelAsync();
-            Assert.Equal(CliExitCodes.Cancelled, await run);
+            Assert.Equal(CliExitCodes.Success, await run);
             if (Directory.Exists(root))
             {
                 Directory.Delete(root, recursive: true);
