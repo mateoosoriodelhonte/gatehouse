@@ -55,7 +55,7 @@ public static class GatehouseProgram
     {
         var options = new WebApplicationOptions
         {
-            ApplicationName = typeof(GatehouseHost).Assembly.FullName,
+            ApplicationName = typeof(GatehouseProgram).Assembly.FullName,
             EnvironmentName = "Production",
         };
         await using var app = await GatehouseHost.BuildAsync(
