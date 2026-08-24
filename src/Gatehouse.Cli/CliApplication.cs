@@ -108,9 +108,10 @@ public sealed class CliApplication
             await error.WriteLineAsync("Gatehouse could not read or write its local data.");
             return CliExitCodes.InternalFailure;
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            await error.WriteLineAsync("Gatehouse could not complete the command.");
+            await error.WriteLineAsync(
+                $"Gatehouse could not complete the command ({exception.GetType().Name}).");
             return CliExitCodes.InternalFailure;
         }
     }

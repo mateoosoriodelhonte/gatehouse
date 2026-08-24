@@ -40,9 +40,10 @@ public static class GatehouseProgram
             await Console.Error.WriteLineAsync("Gatehouse was cancelled.");
             return CliExitCodes.Cancelled;
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            await Console.Error.WriteLineAsync("Gatehouse could not start safely.");
+            await Console.Error.WriteLineAsync(
+                $"Gatehouse could not start safely ({exception.GetType().Name}).");
             return CliExitCodes.InternalFailure;
         }
     }
