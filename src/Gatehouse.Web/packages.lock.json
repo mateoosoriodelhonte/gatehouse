@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Microsoft.AspNetCore.App.Internal.Assets": {
+        "type": "Direct",
+        "requested": "[10.0.11, )",
+        "resolved": "10.0.11",
+        "contentHash": "tYYYBZsuF2DSz1I3hcfB8qC4nNekIKufkYZOJ2R28fNK3PkS7fJao/mIX5H84NH94UACZQ4dhvt8GDlkrJFwLg=="
+      },
+      "gatehouse.application": {
+        "type": "Project",
+        "dependencies": {
+          "Gatehouse.Domain": "[1.0.0, )"
+        }
+      },
+      "gatehouse.domain": {
+        "type": "Project"
+      },
+      "gatehouse.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Gatehouse.Application": "[1.0.0, )",
+          "Gatehouse.Domain": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

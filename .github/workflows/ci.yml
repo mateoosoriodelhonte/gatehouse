@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Gatehouse.slnx --locked-mode
+
+      - name: Verify formatting
+        run: dotnet format Gatehouse.slnx --no-restore --verify-no-changes
+
+      - name: Build
+        run: dotnet build Gatehouse.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Gatehouse.slnx --configuration Release --no-build --logger "console;verbosity=normal"
+
+      - name: Check vulnerable dependencies
+        run: dotnet list Gatehouse.slnx package --vulnerable --include-transitive

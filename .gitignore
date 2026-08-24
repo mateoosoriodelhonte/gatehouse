@@ -1,0 +1,28 @@
+# Build output
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+
+# Repository-local SDK and tools
+.dotnet/
+.store/
+
+# Local data and credentials
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+!.env.example
+
+# IDE and operating-system files
+.DS_Store
+.idea/
+.vs/
+*.user
+*.suo
+
+# Browser test output
+playwright-report/
+test-results/
