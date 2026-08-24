@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Gatehouse.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Gatehouse.Cli;
 

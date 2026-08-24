@@ -200,8 +200,19 @@ public sealed class CliApplication
             "--json", "--demo", "--cached", "--status", "--search", "--author",
             "--label", "--branch", "--reviewer", "--ci", "--draft",
         };
-        if (!parsed.HasOnly(allowed) ||
-            !TryResolveRepository(parsed, needsPullRequestNumber: false, out var repository, out _, out var usageError))
+        if (!parsed.HasOnly(allowed))
+        {
+            var command = readyOnly ? "ready" : "status";
+            return await InvalidAsync(
+                $"Usage: gatehouse {command} OWNER/REPOSITORY [filters] [--json] [--cached]");
+        }
+
+        if (!TryResolveRepository(
+            parsed,
+            needsPullRequestNumber: false,
+            out var repository,
+            out _,
+            out var usageError))
         {
             var command = readyOnly ? "ready" : "status";
             return await InvalidAsync(usageError ??
@@ -242,8 +253,19 @@ public sealed class CliApplication
         bool reportOnly,
         CancellationToken cancellationToken)
     {
-        if (!parsed.HasOnly("--json", "--demo", "--cached") ||
-            !TryResolveRepository(parsed, needsPullRequestNumber: true, out var repository, out var number, out var usageError))
+        if (!parsed.HasOnly("--json", "--demo", "--cached"))
+        {
+            var command = reportOnly ? "report" : "pr";
+            return await InvalidAsync(
+                $"Usage: gatehouse {command} OWNER/REPOSITORY NUMBER [--json] [--cached]");
+        }
+
+        if (!TryResolveRepository(
+            parsed,
+            needsPullRequestNumber: true,
+            out var repository,
+            out var number,
+            out var usageError))
         {
             var command = reportOnly ? "report" : "pr";
             return await InvalidAsync(usageError ??
@@ -532,12 +554,15 @@ public sealed class CliApplication
     {
         repository = new RepositorySlug(string.Empty, string.Empty);
         var parts = value.Split('/');
-        if (parts.Length != 2 ||
-            !RepositoryInputValidator.TryValidateRepository(parts[0], parts[1], out var error))
+        if (parts.Length != 2)
         {
-            errorMessage = parts.Length == 2
-                ? error
-                : "Repository must use OWNER/REPOSITORY format.";
+            errorMessage = "Repository must use OWNER/REPOSITORY format.";
+            return false;
+        }
+
+        if (!RepositoryInputValidator.TryValidateRepository(parts[0], parts[1], out var error))
+        {
+            errorMessage = error;
             return false;
         }
 
