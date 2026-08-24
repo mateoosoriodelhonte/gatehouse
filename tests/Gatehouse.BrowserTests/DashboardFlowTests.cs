@@ -36,9 +36,16 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
             }
         };
         page.PageError += (_, error) => browserErrors.Enqueue($"page error: {error}");
+        page.Response += (_, response) =>
+        {
+            if (response.Status >= 400)
+            {
+                browserErrors.Enqueue($"response {response.Status}: {response.Url}");
+            }
+        };
 
         await page.GotoAsync("/repositories");
-        await WaitForInteractiveAsync(page, browserErrors);
+        await WaitForInteractiveAsync(page, browserErrors, fixture.RecentOutput);
         await page.GetByRole(AriaRole.Link, new() { Name = "Open demo repository" }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "acme/payments" }))
             .ToBeVisibleAsync();
@@ -84,7 +91,8 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
 
     private static async Task WaitForInteractiveAsync(
         IPage page,
-        ConcurrentQueue<string> browserErrors)
+        ConcurrentQueue<string> browserErrors,
+        Func<string> serverOutput)
     {
         try
         {
@@ -104,7 +112,8 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
                 ".filter(name => name.includes('_blazor') || name.includes('blazor.web')) })");
             throw new InvalidOperationException(
                 $"The Blazor circuit did not become interactive. Runtime: {runtime}. " +
-                $"Browser messages: {string.Join(" | ", browserErrors)}",
+                $"Browser messages: {string.Join(" | ", browserErrors)}. " +
+                $"Server output: {serverOutput()}",
                 exception);
         }
     }
@@ -241,7 +250,7 @@ public sealed class GatehouseBrowserFixture : IAsyncLifetime, IDisposable
         }
     }
 
-    private string RecentOutput() => string.Join(Environment.NewLine, output);
+    public string RecentOutput() => string.Join(Environment.NewLine, output);
 
     private static string FindRepositoryRoot()
     {
