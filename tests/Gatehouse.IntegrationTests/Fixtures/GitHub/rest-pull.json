@@ -1,0 +1,30 @@
+{
+  "number": 144,
+  "title": "Fix dashboard route state",
+  "body": "Closes #143\nContext from #141",
+  "state": "open",
+  "draft": false,
+  "mergeable": true,
+  "mergeable_state": "clean",
+  "html_url": "https://github.com/acme/payments/pull/144",
+  "updated_at": "2026-08-24T12:00:00Z",
+  "additions": 45,
+  "deletions": 12,
+  "changed_files": 2,
+  "user": {
+    "login": "octo-dev"
+  },
+  "base": {
+    "ref": "main",
+    "sha": "base-sha"
+  },
+  "head": {
+    "ref": "fix/route-state",
+    "sha": "head-sha"
+  },
+  "requested_reviewers": [
+    {
+      "login": "maintainer"
+    }
+  ]
+}

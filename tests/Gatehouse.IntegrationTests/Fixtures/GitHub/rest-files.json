@@ -1,0 +1,16 @@
+[
+  {
+    "filename": "src/routes/dashboard.cs",
+    "status": "modified",
+    "additions": 30,
+    "deletions": 10,
+    "blob_url": "https://github.com/acme/payments/blob/head/src/routes/dashboard.cs"
+  },
+  {
+    "filename": "tests/routes/dashboard-tests.cs",
+    "status": "added",
+    "additions": 15,
+    "deletions": 2,
+    "blob_url": "https://github.com/acme/payments/blob/head/tests/routes/dashboard-tests.cs"
+  }
+]

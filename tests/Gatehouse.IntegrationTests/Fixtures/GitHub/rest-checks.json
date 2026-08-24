@@ -1,0 +1,29 @@
+{
+  "total_count": 4,
+  "check_runs": [
+    {
+      "name": "build",
+      "status": "completed",
+      "conclusion": "success",
+      "details_url": "https://github.com/acme/payments/actions/runs/1"
+    },
+    {
+      "name": "Path-Aware QA",
+      "status": "completed",
+      "conclusion": "action_required",
+      "details_url": "https://github.com/acme/payments/actions/runs/2"
+    },
+    {
+      "name": "preview",
+      "status": "completed",
+      "conclusion": "skipped",
+      "details_url": "https://github.com/acme/payments/actions/runs/3"
+    },
+    {
+      "name": "lint",
+      "status": "in_progress",
+      "conclusion": null,
+      "details_url": "https://github.com/acme/payments/actions/runs/4"
+    }
+  ]
+}

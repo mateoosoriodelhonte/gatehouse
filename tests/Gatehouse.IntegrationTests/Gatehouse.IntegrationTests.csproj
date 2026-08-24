@@ -25,4 +25,8 @@
     <ProjectReference Include="..\..\src\Gatehouse.Web\Gatehouse.Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Fixtures/**/*.json" />
+  </ItemGroup>
+
 </Project>

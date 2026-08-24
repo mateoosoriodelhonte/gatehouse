@@ -104,6 +104,28 @@ public sealed class ReadinessEngineTests
         Assert.Equal(ReadinessStatus.Go, evaluation.Status);
     }
 
+    [Theory]
+    [InlineData(CheckState.Skipped, "The check was skipped.")]
+    [InlineData(CheckState.Neutral, "The check completed with a neutral conclusion.")]
+    public void Passing_non_success_conclusions_remain_visible(
+        CheckState checkState,
+        string expectedSummary)
+    {
+        var snapshot = SnapshotFactory.Ready() with
+        {
+            Checks = [new CheckSnapshot("optional", checkState, true, null)],
+        };
+
+        var evaluation = ReadinessEngine.Evaluate(snapshot, DefaultPolicy);
+
+        Assert.Equal(ReadinessStatus.Go, evaluation.Status);
+        Assert.Contains(
+            evaluation.Rules,
+            rule => rule.Id == "check:optional" &&
+                rule.Outcome == RuleOutcome.Passed &&
+                rule.Summary == expectedSummary);
+    }
+
     [Fact]
     public void Requested_changes_are_blocking()
     {
@@ -151,6 +173,17 @@ public sealed class ReadinessEngineTests
 
         Assert.Equal(ReadinessStatus.Blocked, evaluation.Status);
         Assert.Contains(evaluation.Blockers, blocker => blocker.Type == "unresolved_threads");
+    }
+
+    [Fact]
+    public void Unknown_required_thread_state_stays_unknown()
+    {
+        var snapshot = SnapshotFactory.Ready() with { UnresolvedReviewThreadCount = null };
+
+        var evaluation = ReadinessEngine.Evaluate(snapshot, DefaultPolicy);
+
+        Assert.Equal(ReadinessStatus.Unknown, evaluation.Status);
+        Assert.Contains(evaluation.Blockers, blocker => blocker.Type == "review_threads_unknown");
     }
 
     [Fact]
