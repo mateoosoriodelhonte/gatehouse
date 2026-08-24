@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "gatehouse.application": {
+        "type": "Project",
+        "dependencies": {
+          "Gatehouse.Domain": "[1.0.0, )"
+        }
+      },
+      "gatehouse.domain": {
+        "type": "Project"
+      },
+      "gatehouse.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Gatehouse.Application": "[1.0.0, )",
+          "Gatehouse.Domain": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

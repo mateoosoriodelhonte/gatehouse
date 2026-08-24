@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Gatehouse.Application/Gatehouse.Application.csproj" />
+    <Project Path="src/Gatehouse.Cli/Gatehouse.Cli.csproj" />
+    <Project Path="src/Gatehouse.Domain/Gatehouse.Domain.csproj" />
+    <Project Path="src/Gatehouse.Infrastructure/Gatehouse.Infrastructure.csproj" />
+    <Project Path="src/Gatehouse.Web/Gatehouse.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Gatehouse.Application.Tests/Gatehouse.Application.Tests.csproj" />
+    <Project Path="tests/Gatehouse.BrowserTests/Gatehouse.BrowserTests.csproj" />
+    <Project Path="tests/Gatehouse.Domain.Tests/Gatehouse.Domain.Tests.csproj" />
+    <Project Path="tests/Gatehouse.IntegrationTests/Gatehouse.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
