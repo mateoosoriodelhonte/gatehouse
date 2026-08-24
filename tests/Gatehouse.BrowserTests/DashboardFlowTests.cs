@@ -69,7 +69,7 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
             new Regex("^https://example\\.com/gatehouse-demo/"));
 
         await page.GetByRole(AriaRole.Button, new() { Name = "Copy report" }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Status).Last).ToContainTextAsync("Copied to clipboard.");
+        await Expect(page.GetByRole(AriaRole.Status).First).ToContainTextAsync("Copied to clipboard.");
         var clipboard = await page.EvaluateAsync<string>("navigator.clipboard.readText()");
         Assert.StartsWith("NO-GO.", clipboard, StringComparison.Ordinal);
         Assert.Contains("Path-Aware QA", clipboard, StringComparison.Ordinal);
