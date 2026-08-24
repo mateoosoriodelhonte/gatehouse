@@ -15,7 +15,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 - Loopback-only dashboard with repository, overview, pull request, batch triage, report, policy, and settings views.
 - Versioned local API and `schemaVersion: "1.0"` JSON documents.
 - `gatehouse repo add`, `status`, `ready`, `pr`, `report`, `serve`, and `version` commands.
-- Synthetic demo mode, stable exit codes, filters, plain reports, and a packaged .NET tool.
+- Synthetic demo mode, stable exit codes, filters, plain reports, and one installable .NET tool package.
 - Domain, application, integration, CLI, accessibility, browser, package, and vulnerability checks in CI.
 - Public architecture, security, privacy, authentication, CLI, development, and contribution documentation.
 

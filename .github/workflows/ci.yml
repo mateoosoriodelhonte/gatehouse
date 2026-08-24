@@ -43,17 +43,15 @@ jobs:
 
       - name: Pack command-line tool
         run: |
-          dotnet pack src/Gatehouse.Domain/Gatehouse.Domain.csproj --configuration Release --no-build --output artifacts/packages
-          dotnet pack src/Gatehouse.Application/Gatehouse.Application.csproj --configuration Release --no-build --output artifacts/packages
-          dotnet pack src/Gatehouse.Infrastructure/Gatehouse.Infrastructure.csproj --configuration Release --no-build --output artifacts/packages
-          dotnet pack src/Gatehouse.Web/Gatehouse.Web.csproj --configuration Release --no-build --output artifacts/packages
           dotnet pack src/Gatehouse.Cli/Gatehouse.Cli.csproj --configuration Release --no-build --output artifacts/packages
+          test "$(find artifacts/packages -maxdepth 1 -name '*.nupkg' | wc -l)" -eq 1
+          test -f artifacts/packages/Gatehouse.1.0.0.nupkg
 
       - name: Save release packages
         uses: actions/upload-artifact@v4
         with:
           name: gatehouse-packages
-          path: artifacts/packages/*.nupkg
+          path: artifacts/packages/Gatehouse.1.0.0.nupkg
           if-no-files-found: error
           retention-days: 14
 

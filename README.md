@@ -17,7 +17,7 @@ Gatehouse is a local, read-only GitHub pull request readiness dashboard and comm
 
 ## Quick start
 
-Gatehouse 1.0.0 needs the .NET 10 runtime. Put all five release `.nupkg` files in one local directory, then install the tool from that directory:
+Gatehouse 1.0.0 needs the .NET 10 runtime. Put the release `Gatehouse.1.0.0.nupkg` file in a local directory, then install the tool from that directory:
 
 ```bash
 dotnet tool install --global Gatehouse --version 1.0.0 \

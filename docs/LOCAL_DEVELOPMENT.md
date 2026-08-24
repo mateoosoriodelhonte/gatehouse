@@ -65,14 +65,10 @@ dotnet run --project src/Gatehouse.Cli -- \
 
 ## Pack and smoke test
 
-Build first, then put the five related packages in one source directory:
+Build first, then pack and install the one tool package:
 
 ```bash
 mkdir -p artifacts/packages artifacts/tool
-dotnet pack src/Gatehouse.Domain/Gatehouse.Domain.csproj -c Release --no-build -o artifacts/packages
-dotnet pack src/Gatehouse.Application/Gatehouse.Application.csproj -c Release --no-build -o artifacts/packages
-dotnet pack src/Gatehouse.Infrastructure/Gatehouse.Infrastructure.csproj -c Release --no-build -o artifacts/packages
-dotnet pack src/Gatehouse.Web/Gatehouse.Web.csproj -c Release --no-build -o artifacts/packages
 dotnet pack src/Gatehouse.Cli/Gatehouse.Cli.csproj -c Release --no-build -o artifacts/packages
 dotnet tool install Gatehouse --tool-path artifacts/tool --version 1.0.0 \
   --add-source artifacts/packages --ignore-failed-sources
