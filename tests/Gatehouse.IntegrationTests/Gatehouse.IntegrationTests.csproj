@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Gatehouse.Domain\Gatehouse.Domain.csproj" />
     <ProjectReference Include="..\..\src\Gatehouse.Application\Gatehouse.Application.csproj" />
+    <ProjectReference Include="..\..\src\Gatehouse.Cli\Gatehouse.Cli.csproj" />
     <ProjectReference Include="..\..\src\Gatehouse.Infrastructure\Gatehouse.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Gatehouse.Web\Gatehouse.Web.csproj" />
   </ItemGroup>

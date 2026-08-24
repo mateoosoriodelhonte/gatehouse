@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Gatehouse.Domain\Gatehouse.Domain.csproj" />
     <ProjectReference Include="..\Gatehouse.Application\Gatehouse.Application.csproj" />
     <ProjectReference Include="..\Gatehouse.Infrastructure\Gatehouse.Infrastructure.csproj" />
+    <ProjectReference Include="..\Gatehouse.Web\Gatehouse.Web.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -11,6 +12,19 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>gatehouse</ToolCommandName>
+    <PackageId>Gatehouse</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Gatehouse contributors</Authors>
+    <Description>Local-first, read-only GitHub change-readiness dashboard and CLI.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/mateoosoriodelhonte/gatehouse</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="/" Link="README.md" />
+  </ItemGroup>
 
 </Project>
