@@ -52,6 +52,7 @@ public static class GatehouseProgram
         int port,
         CancellationToken cancellationToken)
     {
+        var preparedDataPath = CliRuntime.PrepareDataPath(dataPath);
         var options = new WebApplicationOptions
         {
             ApplicationName = typeof(GatehouseProgram).Assembly.GetName().Name,
@@ -62,7 +63,8 @@ public static class GatehouseProgram
             builder => builder.Configuration.AddInMemoryCollection(
                 new Dictionary<string, string?>
                 {
-                    ["ConnectionStrings:Gatehouse"] = CliRuntime.ConnectionString(dataPath),
+                    ["ConnectionStrings:Gatehouse"] =
+                        CliRuntime.ConnectionString(preparedDataPath),
                     ["Gatehouse:Port"] = port.ToString(
                         System.Globalization.CultureInfo.InvariantCulture),
                 }),

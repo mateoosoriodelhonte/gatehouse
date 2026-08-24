@@ -1,17 +1,103 @@
 # Gatehouse
 
-Know what is actually ready to merge — and what is blocking everything else.
+Know what is ready to merge, and why.
 
-Gatehouse is a local-first, read-only GitHub engineering change-readiness dashboard. The project is under active development toward v1.0.0.
+Gatehouse is a local, read-only GitHub pull request readiness dashboard and command-line tool. It turns branch state, checks, reviews, linked issues, and repository policy into one deterministic verdict: `GO`, `REVIEW`, `BLOCKED`, `DRAFT`, or `UNKNOWN`.
 
-## Development
+![Gatehouse demo dashboard](https://raw.githubusercontent.com/mateoosoriodelhonte/gatehouse/v1.0.0/docs/assets/gatehouse-dashboard.png)
 
-Gatehouse uses the .NET 10 LTS SDK pinned in `global.json`.
+## Why Gatehouse
+
+- One dashboard shows the facts that affect a merge decision.
+- The same rules drive the web UI, CLI, reports, and JSON.
+- Missing evidence stays `UNKNOWN`. Gatehouse does not guess.
+- A local SQLite database keeps the cache on your computer.
+- GitHub access is read-only. Gatehouse does not merge, comment, push, or run Git.
+- Demo mode uses synthetic data and makes no GitHub or external network request.
+
+## Quick start
+
+Gatehouse 1.0.0 needs the .NET 10 SDK. Put the release `Gatehouse.1.0.0.nupkg` file in a local directory, then install the tool from that directory:
 
 ```bash
-dotnet restore Gatehouse.slnx
-dotnet build Gatehouse.slnx --configuration Release
-dotnet test Gatehouse.slnx --configuration Release
+dotnet tool install --global Gatehouse --version 1.0.0 \
+  --add-source ./gatehouse-packages --ignore-failed-sources
+gatehouse status --demo
+gatehouse serve
 ```
 
-The application will bind to loopback interfaces only. Gatehouse does not require paid services and does not mutate connected repositories.
+Open <http://localhost:5341>. Use `Ctrl+C` to stop the server.
+
+### Platform notes
+
+- macOS is the primary local release target. The release gate installs and runs the packed tool on hosted macOS.
+- Linux uses the same install and command form. CI also runs the full build, tests, browser flow, and server smoke test on Linux.
+- Windows uses the same `dotnet tool install` command in PowerShell. The installed executable is `gatehouse.exe`. The release gate installs and runs it on hosted Windows.
+- Each platform needs a supported .NET 10 runtime. Gatehouse does not install .NET for you.
+
+For a public repository:
+
+```bash
+gatehouse repo add mateoosoriodelhonte/gatehouse
+gatehouse status mateoosoriodelhonte/gatehouse
+```
+
+GitHub limits requests that do not use a token. Private repositories need a read-only token. See [GitHub authentication](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/GITHUB_AUTH.md).
+
+```bash
+export GATEHOUSE_GITHUB_TOKEN="your-token"
+gatehouse repo add OWNER/REPOSITORY
+```
+
+Do not put a token in a Gatehouse command, config file, or repository.
+
+## Use from source
+
+The repository pins the .NET 10 SDK in `global.json`.
+
+```bash
+dotnet restore Gatehouse.slnx --locked-mode
+dotnet build Gatehouse.slnx --configuration Release --no-restore
+dotnet run --project src/Gatehouse.Cli -- status --demo
+dotnet run --project src/Gatehouse.Cli -- serve
+```
+
+See [local development](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/LOCAL_DEVELOPMENT.md) for all checks.
+
+## Readiness policy
+
+Gatehouse uses safe defaults. Add `.gatehouse.yml` to the directory where you run the CLI when a repository needs different rules:
+
+```yaml
+readiness:
+  require_linked_issue: false
+  require_all_checks: true
+  require_approval: true
+  require_no_unresolved_threads: true
+  require_mergeable: true
+  require_current_branch: false
+  block_on_changes_requested: true
+```
+
+See the [readiness model](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/READINESS_MODEL.md) and [policy reference](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/POLICY.md).
+
+## Documentation
+
+- [Architecture](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/ARCHITECTURE.md)
+- [CLI reference](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/CLI.md)
+- [GitHub authentication](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/GITHUB_AUTH.md)
+- [Privacy](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/PRIVACY.md)
+- [Security](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/SECURITY.md)
+- [Contributing](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/CONTRIBUTING.md)
+- [Changelog](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/CHANGELOG.md)
+
+## Limits
+
+- Gatehouse is a local decision aid. GitHub branch protection remains the authority.
+- V1 reads GitHub.com. It does not support GitHub Enterprise Server.
+- The local database is not encrypted by Gatehouse.
+- macOS and Windows package smoke checks prove basic portability. The full browser and server test runs on Linux.
+
+## License
+
+Gatehouse is available under the [MIT License](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/LICENSE).

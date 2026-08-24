@@ -20,7 +20,10 @@
     <Authors>Gatehouse contributors</Authors>
     <Description>Local-first, read-only GitHub change-readiness dashboard and CLI.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/mateoosoriodelhonte/gatehouse</PackageProjectUrl>
     <RepositoryUrl>https://github.com/mateoosoriodelhonte/gatehouse</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>github;pull-request;readiness;local-first</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

@@ -17,7 +17,11 @@ readiness:
 
 These are the safe defaults. They are defaults, not claims about every GitHub repository. Each boolean can be changed for the selected repository.
 
-Gatehouse V1 supports one `readiness` mapping with the documented boolean keys. It fails closed on unknown roots, unknown keys, duplicate keys, invalid values, and unindented entries. It does not implement the full YAML language.
+`gatehouse repo add` uses `--config PATH` when given. Otherwise, it searches the current directory and each parent for `.gatehouse.yml`. If it finds no file, it uses the safe defaults. The policy is saved with the configured repository.
+
+The CLI does not fetch this file from the selected GitHub repository. The dashboard policy editor changes the policy stored in local SQLite. It does not edit `.gatehouse.yml`.
+
+Gatehouse V1 supports one `readiness` mapping with the documented boolean keys. The file limit is 64 KiB. It fails closed on unknown roots, unknown keys, duplicate keys, invalid values, and unindented entries. It does not implement the full YAML language.
 
 | Key | Effect |
 | --- | --- |
@@ -28,3 +32,5 @@ Gatehouse V1 supports one `readiness` mapping with the documented boolean keys. 
 | `require_mergeable` | Requires GitHub to report a clean merge state. |
 | `require_current_branch` | Blocks a branch that is behind its base. |
 | `block_on_changes_requested` | Blocks when the current review decision requests changes. |
+
+Gatehouse does not claim that every reported check is required. When `require_all_checks` is `false`, it gates only checks that GitHub marks as required. If GitHub cannot expose the required-check set, Gatehouse keeps all checks visible and reports the missing fact.
