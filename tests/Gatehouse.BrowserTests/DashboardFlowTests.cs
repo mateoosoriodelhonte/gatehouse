@@ -38,6 +38,7 @@ public sealed class DashboardFlowTests(GatehouseBrowserFixture fixture)
         page.PageError += (_, error) => browserErrors.Enqueue($"page error: {error}");
 
         await page.GotoAsync("/repositories");
+        await Expect(page.Locator(".app-shell")).ToHaveAttributeAsync("data-interactive", "true");
         await page.GetByRole(AriaRole.Link, new() { Name = "Open demo repository" }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "acme/payments" }))
             .ToBeVisibleAsync();

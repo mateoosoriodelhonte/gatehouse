@@ -3,7 +3,7 @@
 
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
-<div class="app-shell">
+<div class="app-shell" data-interactive="@interactiveReady.ToString().ToLowerInvariant()">
     <aside class="sidebar">
         <a class="brand" href="/" aria-label="Gatehouse home">
             <span class="brand-mark" aria-hidden="true">GH</span>
@@ -51,6 +51,7 @@
 </div>
 
 @code {
+    private bool interactiveReady;
     private bool lightTheme;
     private string themeMark => lightTheme ? "☾" : "☀";
     private string themeLabel => lightTheme ? "Use dark theme" : "Use light theme";
@@ -59,5 +60,14 @@
     {
         lightTheme = !lightTheme;
         await JavaScript.InvokeVoidAsync("gatehouse.setTheme", lightTheme ? "light" : "dark");
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            interactiveReady = true;
+            StateHasChanged();
+        }
     }
 }
