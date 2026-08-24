@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mateoosoriodelhonte/gatehouse/blob/main/schemas/readiness-v1.schema.json",
+  "title": "Gatehouse readiness document v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "repository",
+    "pullRequest",
+    "status",
+    "summary",
+    "nextAction",
+    "evaluatedAt",
+    "policyVersion",
+    "blockers",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[^/]+/[^/]+$"
+    },
+    "pullRequest": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "enum": ["go", "review", "blocked", "draft", "unknown"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nextAction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evaluatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "policyVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "impact", "summary"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "impact": {
+            "enum": ["blocked", "review", "unknown"]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "check": {
+            "type": "string",
+            "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "outcome", "summary"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "enum": ["passed", "failed", "waiting", "unknown", "advisory"]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    }
+  }
+}

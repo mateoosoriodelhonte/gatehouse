@@ -44,6 +44,18 @@ public sealed class ReadinessEngineTests
         Assert.Contains(evaluation.Blockers, blocker => blocker.Type == "merge_conflict");
     }
 
+    [Fact]
+    public void Advisory_merge_conflict_never_recommends_merge()
+    {
+        var snapshot = SnapshotFactory.Ready() with { Mergeability = Mergeability.Conflicting };
+        var policy = DefaultPolicy with { RequireMergeable = false };
+
+        var evaluation = ReadinessEngine.Evaluate(snapshot, policy);
+
+        Assert.Equal(ReadinessStatus.Go, evaluation.Status);
+        Assert.Equal("Ready for review; resolve the merge conflict before merge.", evaluation.NextAction);
+    }
+
     [Theory]
     [InlineData(CheckState.Failure, ReadinessStatus.Blocked, "ci_failed")]
     [InlineData(CheckState.Pending, ReadinessStatus.Review, "ci_pending")]

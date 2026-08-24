@@ -1,0 +1,8 @@
+readiness:
+  require_linked_issue: false
+  require_all_checks: true
+  require_approval: true
+  require_no_unresolved_threads: true
+  require_mergeable: true
+  require_current_branch: false
+  block_on_changes_requested: true

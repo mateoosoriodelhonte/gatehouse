@@ -386,7 +386,7 @@ public static class ReadinessEngine
             return new ReadinessEvaluation(
                 resolvedStatus,
                 SummaryFor(resolvedStatus),
-                NextActionFor(resolvedStatus),
+                NextActionFor(resolvedStatus, Snapshot),
                 _blockers
                     .OrderBy(blocker => blocker.Type, StringComparer.OrdinalIgnoreCase)
                     .ThenBy(blocker => blocker.Summary, StringComparer.Ordinal)
@@ -467,12 +467,18 @@ public static class ReadinessEngine
         _ => "Required readiness evidence is incomplete or unknown.",
     };
 
-    private static string NextActionFor(ReadinessStatus status) => status switch
-    {
-        ReadinessStatus.Go => "Ready for maintainer review or merge.",
-        ReadinessStatus.Review => "Complete the pending review gates before merge consideration.",
-        ReadinessStatus.Blocked => "Resolve every blocking gate before merge consideration.",
-        ReadinessStatus.Draft => "Mark the pull request ready for review when the change is complete.",
-        _ => "Refresh the pull request evidence before merge consideration.",
-    };
+    private static string NextActionFor(
+        ReadinessStatus status,
+        PullRequestSnapshot snapshot) => status switch
+        {
+            ReadinessStatus.Go when snapshot.Mergeability == Mergeability.Conflicting =>
+                "Ready for review; resolve the merge conflict before merge.",
+            ReadinessStatus.Go when snapshot.Mergeability == Mergeability.Unknown =>
+                "Ready for review; confirm mergeability before merge.",
+            ReadinessStatus.Go => "Ready for maintainer review or merge.",
+            ReadinessStatus.Review => "Complete the pending review gates before merge consideration.",
+            ReadinessStatus.Blocked => "Resolve every blocking gate before merge consideration.",
+            ReadinessStatus.Draft => "Mark the pull request ready for review when the change is complete.",
+            _ => "Refresh the pull request evidence before merge consideration.",
+        };
 }
