@@ -20,6 +20,7 @@ For an open, non-draft pull request, precedence is `BLOCKED`, then `UNKNOWN`, th
 - GitHub mergeability `unknown` remains `UNKNOWN`; it is not converted to a failure.
 - Failed, cancelled, and action-required checks remain distinct blocking reasons.
 - Pending and not-executed checks remain distinct waiting reasons.
+- Successful, neutral, and skipped checks pass.
 - Unknown check state produces `UNKNOWN`.
 - Review comments are not approvals.
 - Changes requested are blocking when policy enables that gate.
@@ -31,4 +32,12 @@ Rules and blockers use stable identifiers and stable sorting. Provider response 
 
 ## Machine-readable output
 
-The current contract uses `schemaVersion: "1.0"`. See [`schemas/readiness-v1.schema.json`](../schemas/readiness-v1.schema.json).
+The current contract uses `schemaVersion: "1.0"`. See [`schemas/readiness-v1.schema.json`](../schemas/readiness-v1.schema.json). This schema describes one pull request readiness document. `status --json` puts these documents in a versioned envelope with `repository`, `pullRequestCount`, and `pullRequests`. See the [CLI reference](CLI.md).
+
+Anonymous GitHub REST access cannot expose every review-thread fact. Gatehouse keeps that evidence unknown. A suitable token lets Gatehouse use its read-only GraphQL query for complete review-thread evidence. See [GitHub authentication](GITHUB_AUTH.md).
+
+## Stable evaluation
+
+The engine evaluates one normalized snapshot at one recorded time. It does not call GitHub, read the database, or depend on UI state. Rule identifiers, blocker identifiers, and output order are stable. Reports and JSON are derived from the same result.
+
+Gatehouse is a decision aid. GitHub branch protection and the repository maintainer remain the merge authority.

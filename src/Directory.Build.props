@@ -1,0 +1,22 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Build.props" />
+
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <Authors>Gatehouse contributors</Authors>
+    <Description>Supporting assembly for the local, read-only Gatehouse GitHub readiness tool.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/mateoosoriodelhonte/gatehouse</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mateoosoriodelhonte/gatehouse</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>github;pull-request;readiness;local-first</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\README.md"
+          Pack="true"
+          PackagePath="/"
+          Link="README.md" />
+  </ItemGroup>
+</Project>

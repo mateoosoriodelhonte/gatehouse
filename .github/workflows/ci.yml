@@ -49,6 +49,14 @@ jobs:
           dotnet pack src/Gatehouse.Web/Gatehouse.Web.csproj --configuration Release --no-build --output artifacts/packages
           dotnet pack src/Gatehouse.Cli/Gatehouse.Cli.csproj --configuration Release --no-build --output artifacts/packages
 
+      - name: Save release packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatehouse-packages
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Install and run packed command-line tool
         run: |
           mkdir -p artifacts/tool artifacts/tool-sandbox
@@ -98,3 +106,67 @@ jobs:
 
       - name: Check vulnerable dependencies
         run: dotnet list Gatehouse.slnx package --vulnerable --include-transitive
+
+  package-smoke:
+    name: Package smoke (${{ matrix.os }})
+    needs: validate
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Download release packages
+        uses: actions/download-artifact@v5
+        with:
+          name: gatehouse-packages
+          path: artifacts/packages
+
+      - name: Install and run exact release package
+        shell: pwsh
+        run: |
+          $packagePath = Join-Path $PWD "artifacts/packages"
+          $toolPath = Join-Path $PWD "artifacts/tool"
+          $sandbox = Join-Path $PWD "artifacts/package-smoke"
+          New-Item -ItemType Directory -Force $toolPath, $sandbox | Out-Null
+
+          dotnet tool install Gatehouse `
+            --tool-path $toolPath `
+            --version 1.0.0 `
+            --add-source $packagePath `
+            --ignore-failed-sources `
+            --no-cache
+          if ($LASTEXITCODE -ne 0) { throw "Tool installation failed." }
+
+          $command = Join-Path $toolPath $(if ($IsWindows) { "gatehouse.exe" } else { "gatehouse" })
+          $version = & $command version
+          if ($LASTEXITCODE -ne 0 -or $version -ne "Gatehouse 1.0.0") {
+            throw "Version smoke test failed: $version"
+          }
+
+          $statusJson = & $command status --demo --json
+          $statusExit = $LASTEXITCODE
+          if ($statusExit -ne 2) { throw "Demo status returned $statusExit instead of 2." }
+          $status = $statusJson | ConvertFrom-Json
+          if ($status.schemaVersion -ne "1.0" -or $status.pullRequests.Count -ne 5) {
+            throw "Demo JSON contract failed."
+          }
+
+          $database = Join-Path $sandbox "gatehouse.db"
+          $repositoryJson = & $command --data $database repo add octocat/hello-world --json
+          if ($LASTEXITCODE -ne 0) { throw "Local database migration failed." }
+          $repository = $repositoryJson | ConvertFrom-Json
+          if ($repository.schemaVersion -ne "1.0" -or
+              $repository.repository -ne "octocat/hello-world") {
+            throw "Repository JSON contract failed."
+          }

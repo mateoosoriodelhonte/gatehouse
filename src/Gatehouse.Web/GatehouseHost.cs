@@ -33,6 +33,7 @@ public static class GatehouseHost
         ArgumentNullException.ThrowIfNull(options);
         var builder = WebApplication.CreateBuilder(options);
         configureBuilder?.Invoke(builder);
+        builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
         ConfigureLoopbackOnly(builder);
 
         builder.Services.AddProblemDetails();

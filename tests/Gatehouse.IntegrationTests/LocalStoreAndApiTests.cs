@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Sockets;
@@ -15,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Gatehouse.IntegrationTests;
 
@@ -202,6 +204,64 @@ public sealed class LocalStoreAndApiTests
         }
     }
 
+    [Fact]
+    public async Task Http_client_information_logs_do_not_expose_private_request_urls()
+    {
+        var databasePath = Path.Combine(
+            Path.GetTempPath(),
+            $"gatehouse-logging-{Guid.NewGuid():N}.db");
+        using var logs = new CapturingLoggerProvider();
+        var options = new WebApplicationOptions
+        {
+            ApplicationName = typeof(GatehouseHost).Assembly.FullName,
+            EnvironmentName = "Testing",
+        };
+        await using var app = await GatehouseHost.BuildAsync(
+            options,
+            builder =>
+            {
+                builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:Gatehouse"] = $"Data Source={databasePath}",
+                    ["Gatehouse:EnableUi"] = "false",
+                    ["Gatehouse:Port"] = GetAvailablePort().ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+                });
+                builder.Logging.AddProvider(logs);
+            },
+            configureServices: null);
+        try
+        {
+            const string privateMarker = "private-owner/private-repository/pulls/91";
+            var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger(
+                "System.Net.Http.HttpClient.IPullRequestSource.LogicalHandler");
+
+            logger.Log(
+                LogLevel.Information,
+                new EventId(1, "PrivateRequestProbe"),
+                privateMarker,
+                null,
+                static (state, _) => $"Sending GET https://api.github.com/repos/{state}");
+            logger.Log(
+                LogLevel.Warning,
+                new EventId(2, "WarningProbe"),
+                "gatehouse-http-warning-probe",
+                null,
+                static (state, _) => state);
+
+            Assert.DoesNotContain(
+                logs.Entries,
+                entry => entry.Contains(privateMarker, StringComparison.Ordinal));
+            Assert.Contains(
+                logs.Entries,
+                entry => entry.Contains("gatehouse-http-warning-probe", StringComparison.Ordinal));
+        }
+        finally
+        {
+            DeleteDatabaseFiles(databasePath);
+        }
+    }
+
     private static LocalReadinessStore CreateStore(
         IDbContextFactory<GatehouseDbContext> factory,
         IPullRequestSource source) =>
@@ -305,6 +365,42 @@ public sealed class LocalStoreAndApiTests
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;
+    }
+
+    private sealed class CapturingLoggerProvider : ILoggerProvider
+    {
+        public ConcurrentQueue<string> Entries { get; } = new();
+
+        public ILogger CreateLogger(string categoryName) => new CapturingLogger(Entries);
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private sealed class CapturingLogger(ConcurrentQueue<string> entries) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => NoopScope.Instance;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) =>
+            entries.Enqueue(formatter(state, exception));
+    }
+
+    private sealed class NoopScope : IDisposable
+    {
+        public static NoopScope Instance { get; } = new();
+
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class TestDatabase : IAsyncDisposable
