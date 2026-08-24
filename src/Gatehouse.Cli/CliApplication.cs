@@ -838,7 +838,7 @@ public sealed class CliApplication
                         });
                         break;
                     default:
-                        if (argument.StartsWith("-", StringComparison.Ordinal))
+                        if (argument.StartsWith('-'))
                         {
                             result.Error = "Unknown option. Run: gatehouse help";
                         }

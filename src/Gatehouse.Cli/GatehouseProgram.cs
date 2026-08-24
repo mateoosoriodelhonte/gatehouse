@@ -67,7 +67,8 @@ public static class GatehouseProgram
                 }),
             configureServices: null,
             cancellationToken);
-        await app.RunAsync(cancellationToken);
+        await app.StartAsync(cancellationToken);
+        await app.WaitForShutdownAsync(cancellationToken);
         return CliExitCodes.Success;
     }
 }
