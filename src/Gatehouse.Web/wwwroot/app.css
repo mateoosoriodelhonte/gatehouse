@@ -543,7 +543,7 @@ button.quick-filter.active {
 .fact-grid {
     display: grid;
     gap: .65rem;
-    grid-template-columns: repeat(3, minmax(8rem, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     margin: 0;
 }
 
@@ -561,6 +561,7 @@ button.quick-filter.active {
 
 .fact-grid dd {
     margin: .25rem 0 0;
+    overflow-wrap: anywhere;
 }
 
 .evidence-list,
