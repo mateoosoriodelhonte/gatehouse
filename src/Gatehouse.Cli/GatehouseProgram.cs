@@ -53,25 +53,38 @@ public static class GatehouseProgram
         int port,
         CancellationToken cancellationToken)
     {
-        var options = new WebApplicationOptions
+        try
         {
-            ApplicationName = typeof(GatehouseProgram).Assembly.FullName,
-            EnvironmentName = "Production",
-        };
-        await using var app = await GatehouseHost.BuildAsync(
-            options,
-            builder => builder.Configuration.AddInMemoryCollection(
-                new Dictionary<string, string?>
-                {
-                    ["ConnectionStrings:Gatehouse"] = CliRuntime.ConnectionString(dataPath),
-                    ["Gatehouse:Port"] = port.ToString(
-                        System.Globalization.CultureInfo.InvariantCulture),
-                }),
-            configureServices: null,
-            cancellationToken);
-        await app.StartAsync(cancellationToken);
-        await app.WaitForShutdownAsync(cancellationToken);
-        return CliExitCodes.Success;
+            var options = new WebApplicationOptions
+            {
+                ApplicationName = typeof(GatehouseProgram).Assembly.FullName,
+                EnvironmentName = "Production",
+            };
+            await using var app = await GatehouseHost.BuildAsync(
+                options,
+                builder => builder.Configuration.AddInMemoryCollection(
+                    new Dictionary<string, string?>
+                    {
+                        ["ConnectionStrings:Gatehouse"] = CliRuntime.ConnectionString(dataPath),
+                        ["Gatehouse:Port"] = port.ToString(
+                            System.Globalization.CultureInfo.InvariantCulture),
+                    }),
+                configureServices: null,
+                cancellationToken);
+            await app.StartAsync(cancellationToken);
+            await app.WaitForShutdownAsync(cancellationToken);
+            return CliExitCodes.Success;
+        }
+        catch (InvalidOperationException exception) when (
+            Environment.GetEnvironmentVariable("GATEHOUSE_HOST_DIAGNOSTICS") == "1")
+        {
+            var safeMessage = new string(exception.Message
+                .Where(character => !char.IsControl(character))
+                .Take(500)
+                .ToArray());
+            await Console.Error.WriteLineAsync($"Host diagnostic: {safeMessage}");
+            throw;
+        }
     }
 }
 
