@@ -51,11 +51,11 @@ Demo mode uses the synthetic `acme/payments` repository and makes no network req
 ```bash
 gatehouse status --demo
 gatehouse status --demo --json
-gatehouse pr 201 --demo
-gatehouse report 201 --demo
+gatehouse pr 142 --demo
+gatehouse report 142 --demo
 ```
 
-The fixed demo has five pull requests that cover all readiness statuses.
+The fixed demo has five pull requests numbered 142 through 146. They cover `GO`, `REVIEW`, `BLOCKED`, and `DRAFT`, including separate check-failure and merge-conflict blockers.
 
 ## Filters
 

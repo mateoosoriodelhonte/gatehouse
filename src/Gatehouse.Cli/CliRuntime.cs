@@ -24,24 +24,7 @@ internal sealed class CliRuntime : IAsyncDisposable
         string dataPath,
         CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(dataPath);
-        var fullPath = Path.GetFullPath(dataPath);
-        var directory = Path.GetDirectoryName(fullPath);
-        if (string.IsNullOrWhiteSpace(directory))
-        {
-            throw new ArgumentException(
-                "The Gatehouse data path must include a directory.",
-                nameof(dataPath));
-        }
-
-        var directoryExisted = Directory.Exists(directory);
-        Directory.CreateDirectory(directory);
-        if (!directoryExisted && !OperatingSystem.IsWindows())
-        {
-            File.SetUnixFileMode(
-                directory,
-                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-        }
+        var fullPath = PrepareDataPath(dataPath);
 
         var databaseOptions = new DbContextOptionsBuilder<GatehouseDbContext>()
             .UseSqlite(ConnectionString(fullPath))
@@ -50,11 +33,6 @@ internal sealed class CliRuntime : IAsyncDisposable
         await using (var database = await contextFactory.CreateDbContextAsync(cancellationToken))
         {
             await database.Database.MigrateAsync(cancellationToken);
-        }
-
-        if (!OperatingSystem.IsWindows() && File.Exists(fullPath))
-        {
-            File.SetUnixFileMode(fullPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
         }
 
         var httpClient = new HttpClient
@@ -74,6 +52,50 @@ internal sealed class CliRuntime : IAsyncDisposable
             new LocalStoreOptions(),
             TimeProvider.System);
         return new CliRuntime(store, httpClient);
+    }
+
+    internal static string PrepareDataPath(string dataPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataPath);
+        var fullPath = Path.GetFullPath(dataPath);
+        var directory = Path.GetDirectoryName(fullPath);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            throw new ArgumentException(
+                "The Gatehouse data path must include a directory.",
+                nameof(dataPath));
+        }
+
+        var directoryExisted = Directory.Exists(directory);
+        if (!directoryExisted && !OperatingSystem.IsWindows())
+        {
+            Directory.CreateDirectory(
+                directory,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+        else
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        if (!OperatingSystem.IsWindows())
+        {
+            var fileMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+            if (!File.Exists(fullPath))
+            {
+                using var file = new FileStream(fullPath, new FileStreamOptions
+                {
+                    Mode = FileMode.CreateNew,
+                    Access = FileAccess.ReadWrite,
+                    Share = FileShare.None,
+                    UnixCreateMode = fileMode,
+                });
+            }
+
+            File.SetUnixFileMode(fullPath, fileMode);
+        }
+
+        return fullPath;
     }
 
     public static string DefaultDataPath()

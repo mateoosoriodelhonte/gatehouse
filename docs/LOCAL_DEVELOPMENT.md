@@ -30,7 +30,7 @@ dotnet run --project src/Gatehouse.Cli -- status --demo
 dotnet run --project src/Gatehouse.Cli -- serve --port 5341
 ```
 
-Open <http://localhost:5341>. The dashboard starts with synthetic data available. Demo mode makes no network request.
+Open <http://localhost:5341>. The dashboard starts with synthetic data available. Demo mode makes no GitHub or external network request.
 
 To use a real repository, set a read-only token when needed and add it:
 
@@ -61,7 +61,7 @@ dotnet run --project src/Gatehouse.Cli -- \
 
 ## Policy
 
-`repo add` searches the current directory and each parent directory for `.gatehouse.yml`. `--config PATH` selects an exact file. A missing file uses the safe defaults. See [policy](POLICY.md).
+`repo add` searches the current directory and each parent directory for `.gatehouse.yml`. If discovery finds no file, Gatehouse uses the safe defaults. `--config PATH` selects an exact file; a missing explicit file is an input error. See [policy](POLICY.md).
 
 ## Pack and smoke test
 

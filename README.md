@@ -4,7 +4,7 @@ Know what is ready to merge, and why.
 
 Gatehouse is a local, read-only GitHub pull request readiness dashboard and command-line tool. It turns branch state, checks, reviews, linked issues, and repository policy into one deterministic verdict: `GO`, `REVIEW`, `BLOCKED`, `DRAFT`, or `UNKNOWN`.
 
-![Gatehouse demo dashboard](docs/assets/gatehouse-dashboard.png)
+![Gatehouse demo dashboard](https://raw.githubusercontent.com/mateoosoriodelhonte/gatehouse/v1.0.0/docs/assets/gatehouse-dashboard.png)
 
 ## Why Gatehouse
 
@@ -13,11 +13,11 @@ Gatehouse is a local, read-only GitHub pull request readiness dashboard and comm
 - Missing evidence stays `UNKNOWN`. Gatehouse does not guess.
 - A local SQLite database keeps the cache on your computer.
 - GitHub access is read-only. Gatehouse does not merge, comment, push, or run Git.
-- Demo mode uses synthetic data and makes no network request.
+- Demo mode uses synthetic data and makes no GitHub or external network request.
 
 ## Quick start
 
-Gatehouse 1.0.0 needs the .NET 10 runtime. Put the release `Gatehouse.1.0.0.nupkg` file in a local directory, then install the tool from that directory:
+Gatehouse 1.0.0 needs the .NET 10 SDK. Put the release `Gatehouse.1.0.0.nupkg` file in a local directory, then install the tool from that directory:
 
 ```bash
 dotnet tool install --global Gatehouse --version 1.0.0 \
@@ -38,11 +38,11 @@ Open <http://localhost:5341>. Use `Ctrl+C` to stop the server.
 For a public repository:
 
 ```bash
-gatehouse repo add dotnet/runtime
-gatehouse status dotnet/runtime
+gatehouse repo add mateoosoriodelhonte/gatehouse
+gatehouse status mateoosoriodelhonte/gatehouse
 ```
 
-GitHub limits requests that do not use a token. Private repositories need a read-only token. See [GitHub authentication](docs/GITHUB_AUTH.md).
+GitHub limits requests that do not use a token. Private repositories need a read-only token. See [GitHub authentication](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/GITHUB_AUTH.md).
 
 ```bash
 export GATEHOUSE_GITHUB_TOKEN="your-token"
@@ -62,7 +62,7 @@ dotnet run --project src/Gatehouse.Cli -- status --demo
 dotnet run --project src/Gatehouse.Cli -- serve
 ```
 
-See [local development](docs/LOCAL_DEVELOPMENT.md) for all checks.
+See [local development](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/LOCAL_DEVELOPMENT.md) for all checks.
 
 ## Readiness policy
 
@@ -79,17 +79,17 @@ readiness:
   block_on_changes_requested: true
 ```
 
-See the [readiness model](docs/READINESS_MODEL.md) and [policy reference](docs/POLICY.md).
+See the [readiness model](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/READINESS_MODEL.md) and [policy reference](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/POLICY.md).
 
 ## Documentation
 
-- [Architecture](ARCHITECTURE.md)
-- [CLI reference](docs/CLI.md)
-- [GitHub authentication](docs/GITHUB_AUTH.md)
-- [Privacy](docs/PRIVACY.md)
-- [Security](SECURITY.md)
-- [Contributing](CONTRIBUTING.md)
-- [Changelog](CHANGELOG.md)
+- [Architecture](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/ARCHITECTURE.md)
+- [CLI reference](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/CLI.md)
+- [GitHub authentication](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/GITHUB_AUTH.md)
+- [Privacy](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/docs/PRIVACY.md)
+- [Security](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/SECURITY.md)
+- [Contributing](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/CONTRIBUTING.md)
+- [Changelog](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/CHANGELOG.md)
 
 ## Limits
 
@@ -100,4 +100,4 @@ See the [readiness model](docs/READINESS_MODEL.md) and [policy reference](docs/P
 
 ## License
 
-Gatehouse is available under the [MIT License](LICENSE).
+Gatehouse is available under the [MIT License](https://github.com/mateoosoriodelhonte/gatehouse/blob/v1.0.0/LICENSE).

@@ -67,9 +67,8 @@ jobs:
           set -e
           test "$status_code" -eq 2
           python3 -c 'import json; data=json.load(open("status.json")); assert data["schemaVersion"] == "1.0" and len(data["pullRequests"]) == 5'
-          ../tool/gatehouse --data gatehouse.db repo add octocat/hello-world --json > repository.json
-          python3 -c 'import json; data=json.load(open("repository.json")); assert data["repository"] == "octocat/hello-world"'
-          ../tool/gatehouse --data gatehouse.db serve --port 5349 > serve.log 2>&1 &
+          database_path=fresh/Gatehouse/gatehouse.db
+          ../tool/gatehouse --data "$database_path" serve --port 5349 > serve.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
@@ -89,9 +88,13 @@ jobs:
           python3 -c 'import json; data=json.load(open("health.json")); assert data == {"status": "ok", "version": "1"}'
           curl --fail --silent http://localhost:5349/repositories > dashboard.html
           grep -F "Add a public or token-accessible GitHub repository" dashboard.html
+          test "$(stat -c '%a' fresh/Gatehouse)" = "700"
+          test "$(stat -c '%a' "$database_path")" = "600"
           kill "$server_pid"
           wait "$server_pid" || true
           trap - EXIT
+          ../tool/gatehouse --data "$database_path" repo add octocat/hello-world --json > repository.json
+          python3 -c 'import json; data=json.load(open("repository.json")); assert data["repository"] == "octocat/hello-world"'
           popd
 
       - name: Save dashboard screenshot

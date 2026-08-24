@@ -25,5 +25,6 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 - Kept GitHub tokens in process memory and out of Gatehouse storage and responses.
 - Added input, response-size, pagination, request-count, retry, link, terminal, and local mutation controls.
 - Suppressed Information-level HTTP client logs that could contain private repository paths.
+- Created fresh Unix data directories and database files with owner-only modes before migration.
 
 [1.0.0]: https://github.com/mateoosoriodelhonte/gatehouse/releases/tag/v1.0.0

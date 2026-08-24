@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 using Gatehouse.Application;
 using Gatehouse.Cli;
@@ -182,6 +184,48 @@ public sealed class CliApplicationTests
     }
 
     [Fact]
+    public async Task Serve_secures_a_fresh_default_style_unix_data_path()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var root = Path.Combine(Path.GetTempPath(), $"gatehouse-serve-{Guid.NewGuid():N}");
+        var dataDirectory = Path.Combine(root, "Gatehouse");
+        var databasePath = Path.Combine(dataDirectory, "gatehouse.db");
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var run = GatehouseProgram.RunAsync(
+            ["--data", databasePath, "serve", "--port", GetAvailablePort().ToString(
+                System.Globalization.CultureInfo.InvariantCulture)],
+            cancellation.Token);
+        try
+        {
+            for (var attempt = 0; attempt < 100 && !File.Exists(databasePath); attempt++)
+            {
+                await Task.Delay(25, cancellation.Token);
+            }
+
+            Assert.True(File.Exists(databasePath));
+            Assert.Equal(
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute,
+                File.GetUnixFileMode(dataDirectory));
+            Assert.Equal(
+                UnixFileMode.UserRead | UnixFileMode.UserWrite,
+                File.GetUnixFileMode(databasePath));
+        }
+        finally
+        {
+            await cancellation.CancelAsync();
+            Assert.Equal(CliExitCodes.Cancelled, await run);
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task Human_output_removes_terminal_controls_from_provider_text()
     {
         var detail = DemoReadinessCatalog.Create();
@@ -226,6 +270,20 @@ public sealed class CliApplicationTests
             currentDirectory: currentDirectory);
         var exitCode = await application.RunAsync(args);
         return new CliResult(exitCode, output.ToString(), error.ToString());
+    }
+
+    private static int GetAvailablePort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        try
+        {
+            return ((IPEndPoint)listener.LocalEndpoint).Port;
+        }
+        finally
+        {
+            listener.Stop();
+        }
     }
 
     private sealed record CliResult(int ExitCode, string Output, string Error);

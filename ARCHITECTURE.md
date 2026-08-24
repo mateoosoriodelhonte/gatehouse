@@ -34,7 +34,7 @@ Gatehouse does not use a language model to decide readiness. The same snapshot a
 
 ### Read-only GitHub access
 
-Gatehouse sends GET requests to GitHub REST endpoints and one POST request to GitHub GraphQL. The GraphQL operation is a query. The client base address must be exactly `https://api.github.com/`. The application has no code to merge, comment, push, or change repository settings.
+Gatehouse sends GET requests to GitHub REST endpoints. When a token is present, it also sends one GraphQL POST query for each open pull request. These POSTs contain queries, not mutations. The client base address must be exactly `https://api.github.com/`. The application has no code to merge, comment, push, or change repository settings.
 
 ### Local storage
 
@@ -46,7 +46,7 @@ The `Gatehouse` tool package includes the web host. `gatehouse serve` and the so
 
 ### Local mutation guard
 
-The local API lets the UI change Gatehouse data, such as repository selection or policy. Each mutating API request must include `X-Gatehouse-Request: 1`. Interactive UI requests also use ASP.NET Core antiforgery protection. This header is a local request guard, not user authentication.
+The interactive UI uses `GatehouseUiService` to change local Gatehouse data. The separate local HTTP API supports other local clients. Each mutating API request must include `X-Gatehouse-Request: 1`. Interactive UI requests also use ASP.NET Core antiforgery protection. This header is a local request guard, not user authentication.
 
 ### No shell execution
 

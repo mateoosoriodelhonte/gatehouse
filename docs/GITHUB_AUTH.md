@@ -13,7 +13,7 @@ Choose:
 - the shortest useful expiration; and
 - read access only.
 
-Gatehouse reads pull requests, reviews, review threads, issue links, branches, commits, checks, commit statuses, and repository metadata. Grant only the read permissions GitHub requires for those facts. Permission names can vary by token type and can change. GitHub notes that fine-grained personal access tokens do not support every Checks API case. If a fine-grained token omits needed evidence for your account, use an organization-approved GitHub App or a classic token with the narrowest available `repo` read access and a short lifetime.
+Gatehouse reads pull requests, reviews, review threads, issue links, branches, commits, checks, commit statuses, and repository metadata. Grant only the read permissions GitHub requires for those facts. Permission names can vary by token type and can change. GitHub notes that fine-grained personal access tokens do not support every Checks API case. If a fine-grained token omits needed evidence for your account, use an organization-approved GitHub App when possible. A classic token with the `repo` scope has broad read and write power over repositories even though Gatehouse makes only read requests. Use that fallback only when necessary, with a short lifetime and careful process isolation.
 
 Current GitHub references:
 

@@ -4,7 +4,7 @@ Gatehouse is local-first. It has no telemetry, analytics, advertising, cloud acc
 
 ## Network use
 
-Demo mode makes no network request. For a real repository, Gatehouse sends bounded read requests to `https://api.github.com/`. GitHub receives the normal request metadata, such as your IP address, user agent, selected repository, and token when set. GitHub's privacy terms apply to that traffic.
+Demo mode makes no GitHub or external network request. The dashboard still uses browser-to-localhost traffic. For a real repository, Gatehouse sends bounded read requests to `https://api.github.com/`. GitHub receives the normal request metadata, such as your IP address, user agent, selected repository, and token when set. GitHub's privacy terms apply to that traffic.
 
 The web dashboard listens only on localhost. It is not published to the local network or internet.
 
